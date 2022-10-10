@@ -18,20 +18,27 @@ def synthesize(df, value):
 
 
 def convert(csv):
+    # remove all empty columns from csv
     df = pd.read_csv(csv)
+    df.dropna(axis=1, how='all', inplace=True)
     df.insert(47, "Sleep Delta (hr)", synthesize(df, "sleep_delta"))
     # df.insert(48, "Mood", synthesize(df, "mood"))
+    print("converted")
     return df
     
     
 def correlation(df):
     # correlation matrix
     corr = df.corr()
+    print("correlation matrix created")
     # plot the heatmap
     plt.subplots(figsize=(50, 50))
     sns.heatmap(corr, annot=True, fmt=".2f", vmin=-
                 1.0, vmax=+1.0, cmap='Spectral')
-    plt.show()
+    print("data visualisation completed")
+    # plt.show()
+    # save the figure to file
+    plt.savefig('visualisations/correlation.png')
     
 
 def pair(df):
