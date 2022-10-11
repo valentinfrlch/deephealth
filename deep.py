@@ -1,4 +1,5 @@
 from re import T
+from matplotlib.ft2font import LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -128,8 +129,8 @@ def network(df, style):
         net.save_graph("visualisations/dynamic_network.html")
 
 
-def pair(df):
-    g = sns.pairplot(df[['Headphone Audio Exposure (dBASPL)', 'Mood']],
+def pair(df, data):
+    g = sns.pairplot(df[data],
                      kind='kde',
                      plot_kws=dict(fill=False, color='black', linewidths=1),
                      diag_kws=dict(fill=False, color='black', linewidth=1))
@@ -140,9 +141,25 @@ def pair(df):
     plt.savefig("visualisations/pairplot.png")
 
 
+def line(df, data, average=True):
+    plt.figure(figsize=(50, 50))
+    # add average line if average is true
+    if average:
+        for i in range(len(data)):
+            avg = df[data[i]].rolling(window=7).mean()
+            # plot rolling average
+            plt.plot(df['Date'], avg, color='black',
+                     linewidth=3, label=data[i] + " average")
+            # plot data
+    for i in range(len(data)):
+        plt.plot(df['Date'], df[data[i]], label=data[i], linewidth=1)
+        plt.savefig('visualisations/lineplot.png')
+
+
 if __name__ == '__main__':
     df = convert('dataset/export.csv')
 
     # correlation(df)
-    # pair(df)
-    network(df, "static")
+    # pair(df, ["Mood", "Heart Rate Variability (ms)", "Sleep Delta (hr)"])
+    line(df, ["Heart Rate Variability (ms)", "Blood Pressure [Systolic] (mmHg)", "Blood Pressure [Diastolic] (mmHg)"])
+    # network(df, "static")
