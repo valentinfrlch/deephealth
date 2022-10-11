@@ -1,0 +1,33 @@
+var options = {
+	"nodes": {
+		"size": 6,
+		"borderRadius": 4,
+		"borderWidthSelected": 4,
+		"color": {
+			"border": "rgba(0,156,233,0.2)",
+			"highlight": {
+				"border": "rgba(0,255,163,1)",
+				"background": "rgba(246,252,255,1)"
+			}
+		},
+		"shapeProperties": {
+		"borderRadius": 1
+		}
+	},
+	"edges": {
+		"color": {
+			"inherit": true
+		},
+		"smooth": false
+	},
+	"physics": {
+		"barnesHut": {
+			"springLength": 400,
+			"damping": 0,
+			"avoidOverlap": 0.5
+		},
+		"maxVelocity": 3,
+		"minVelocity": 0.1,
+		"timestep": 0.5
+	}
+}

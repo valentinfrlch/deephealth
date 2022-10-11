@@ -1,0 +1,19 @@
+var options = {
+    "physics": {
+        "barnesHut": {
+            "theta": 0.55,
+            "gravitationalConstant": -61260,
+            "centralGravity": 0.5,
+            "springLength": 180,
+            "springConstant": 0,
+            "damping": 0,
+            "avoidOverlap": 1
+        },
+        "maxVelocity": 6,
+        "minVelocity": 0.75,
+        "timestep": 1,
+        "wind": {
+            "x": 0.1
+        }
+    }
+}
