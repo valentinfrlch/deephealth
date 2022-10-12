@@ -168,10 +168,9 @@ def line(df, data, average=True, window=7, normalize=False):
 if __name__ == '__main__':
     df = convert('dataset/export.csv')
     # correlation(df)
-    # get column that contains "VO2 Max"
-    query1 = df.columns[df.columns.str.contains('Resting')][0]
-    query2 = df.columns[df.columns.str.contains('Delta')][0]
-    query3 = df.columns[df.columns.str.contains('Systolic')][0]
+    # query1 = df.columns[df.columns.str.contains('Resting')][0]
+    # query2 = df.columns[df.columns.str.contains('Delta')][0]
+    # query3 = df.columns[df.columns.str.contains('Systolic')][0]
     # line(df, [query1, query2], True, 50, True)
     # pair(df, [query1, query2, query3])
     network(df, "dynamic")
