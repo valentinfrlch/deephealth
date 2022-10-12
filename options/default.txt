@@ -25,9 +25,9 @@ var options = {
 		"barnesHut": {
 			"theta": 0.5,
 			"springLength": 200,
-			"damping": 0,
-			"avoidOverlap": 1,
-			"gravitationalConstant": -60000
+			"damping": 0.3,
+			"avoidOverlap": 0.7,
+			"gravitationalConstant": -40000
 		},
 		"maxVelocity": 1,
 		"minVelocity": 0.1,
