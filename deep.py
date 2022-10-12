@@ -159,7 +159,7 @@ def line(df, data, average=True):
 if __name__ == '__main__':
     df = convert('dataset/export.csv')
 
-    # correlation(df)
+    correlation(df)
     # pair(df, ["Mood", "Heart Rate Variability (ms)", "Sleep Delta (hr)"])
-    line(df, ["Heart Rate Variability (ms)", "Blood Pressure [Systolic] (mmHg)", "Blood Pressure [Diastolic] (mmHg)"])
-    # network(df, "static")
+    # line(df, ["Blood Pressure [Systolic] (mmHg)", "Blood Pressure [Diastolic] (mmHg)"], False)
+    network(df, "static")
