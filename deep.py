@@ -1,7 +1,10 @@
+from multiprocessing.sharedctypes import Value
 from re import T
 from matplotlib.ft2font import LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH
 import pandas as pd
 import matplotlib.pyplot as plt
+from pyautogui import size
+from pygments import highlight
 import seaborn as sns
 import json
 import networkx as nx
@@ -54,8 +57,7 @@ def mood(df):
                     df.at[i, v] = 1
                 else:
                     df.at[i, v] = 0
-            
-            
+
 
 def convert(csv):
     # remove all empty columns from csv
@@ -63,6 +65,8 @@ def convert(csv):
     # convert date column to datetime
     df.Date = pd.to_datetime(df.Date)
     df.dropna(axis=1, how='all', inplace=True)
+    # interpolate missing values in dataframe
+    df.interpolate(method='ffill', axis=0, inplace=True)
     # get index of column "Sleep Analysis [Asleep] (hr)"
     i = df.columns.get_loc("Sleep Analysis [Asleep] (hr)")
     df.insert(i, "Sleep Delta (hr)", synthesize(df, "sleep_delta"))
@@ -112,20 +116,20 @@ def network(df, style):
         net.set_options(open("options/default.txt").read())
         # net.show_buttons(filter_=['edges', 'nodes'])
 
-        # add nodes with size according to how many edges they have
-        # get how many edges each node has
         net.add_nodes(corr.columns)
         for i in range(len(corr.columns)):
             for j in range(i):
-                if abs(corr.iloc[i, j]) > 0.45 or abs(corr.iloc[i, j]) < -0.45:
+                if abs(corr.iloc[i, j]) > 0.4:
                     # set the color of the edge according to the correlation value
                     if corr.iloc[i, j] > 0:
-                        color = "red"
+                        color = "#5bc3eb"
                     else:
-                        color = "blue"
+                        color = "#f06449"
+                    width = abs(corr.iloc[i, j]) * 0.01
+                    # change the highlight color of the edge
                     net.add_edge(corr.columns[i], corr.columns[j], color=color,
-                                 title="Correlation: " + str(corr.iloc[i, j]))
-        # save the graph
+                                 title="Correlation: " + str(abs(round(corr.iloc[i, j] * 100))) + "%", value=width)
+
         net.save_graph("visualisations/dynamic_network.html")
 
 
@@ -141,25 +145,33 @@ def pair(df, data):
     plt.savefig("visualisations/pairplot.png")
 
 
-def line(df, data, average=True):
+def line(df, data, average=True, window=7, normalize=False):
     plt.figure(figsize=(50, 50))
     # add average line if average is true
-    if average:
-        for i in range(len(data)):
-            avg = df[data[i]].rolling(window=7).mean()
+    # normalize the data if normalize is true
+    if normalize:
+        for d in range(len(data)):
+            df[data[d]] = df[data[d]] / df[data[d]].max()
+    for i in range(len(data)):
+        if average:
+            avg = df[data[i]].rolling(window=window).mean()
             # plot rolling average
             plt.plot(df['Date'], avg, color='black',
                      linewidth=3, label=data[i] + " average")
-            # plot data
-    for i in range(len(data)):
         plt.plot(df['Date'], df[data[i]], label=data[i], linewidth=1)
-        plt.savefig('visualisations/lineplot.png')
+        # add legend with custom size
+        plt.legend(prop={'size': 40})
+
+    plt.savefig('visualisations/lineplot.png')
 
 
 if __name__ == '__main__':
     df = convert('dataset/export.csv')
-
-    correlation(df)
-    # pair(df, ["Mood", "Heart Rate Variability (ms)", "Sleep Delta (hr)"])
-    # line(df, ["Blood Pressure [Systolic] (mmHg)", "Blood Pressure [Diastolic] (mmHg)"], False)
-    network(df, "static")
+    # correlation(df)
+    # get column that contains "VO2 Max"
+    query1 = df.columns[df.columns.str.contains('Resting')][0]
+    query2 = df.columns[df.columns.str.contains('Delta')][0]
+    query3 = df.columns[df.columns.str.contains('Systolic')][0]
+    # line(df, [query1, query2], True, 50, True)
+    pair(df, [query1, query2, query3])
+    # network(df, "dynamic")

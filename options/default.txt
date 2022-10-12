@@ -1,13 +1,13 @@
 var options = {
 	"nodes": {
-		"size": 6,
+		"size": 8,
 		"borderRadius": 4,
 		"borderWidthSelected": 4,
 		"color": {
 			"border": "rgba(0,156,233,0.2)",
 			"highlight": {
-				"border": "rgba(0,255,163,1)",
-				"background": "rgba(246,252,255,1)"
+				"border": "#5bc3eb",
+				"background": "#5bc3eb"
 			}
 		},
 		"shapeProperties": {
@@ -16,17 +16,18 @@ var options = {
 	},
 	"edges": {
 		"color": {
-			"inherit": true
+			"inherit": true,
+			"highlight": "#f0ad4e"
 		},
 		"smooth": false
 	},
 	"physics": {
 		"barnesHut": {
-			"springLength": 400,
+			"springLength": 300,
 			"damping": 0,
-			"avoidOverlap": 0.5
+			"avoidOverlap": 1
 		},
-		"maxVelocity": 3,
+		"maxVelocity": 1,
 		"minVelocity": 0.1,
 		"timestep": 0.5
 	}
