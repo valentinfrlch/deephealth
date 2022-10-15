@@ -109,7 +109,7 @@ def network(df, style):
         # save the figure to file
         plt.savefig('visualisations/static_network.png')
     elif style == "dynamic":
-        net = Network(height="100%", width="100%",
+        net = Network(height="90%", width="90%",
                       bgcolor="#222222", font_color=True)
         net.set_options(open("options/default.txt").read())
         # net.show_buttons(filter_=['edges', 'nodes'])
