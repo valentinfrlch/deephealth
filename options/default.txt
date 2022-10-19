@@ -32,5 +32,12 @@ var options = {
 		"maxVelocity": 1,
 		"minVelocity": 0.1,
 		"timestep": 0.5
+	},
+	"stabilization": {
+		"enabled": true,
+		"iterations": 1000,
+		"updateInterval": 100,
+		"onlyDynamicEdges": false,
+		"fit": true
 	}
 }

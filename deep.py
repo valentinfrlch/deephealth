@@ -109,7 +109,7 @@ def network(df, style):
         # save the figure to file
         plt.savefig('visualisations/static_network.png')
     elif style == "dynamic":
-        net = Network(bgcolor="#222222", font_color=True)
+        net = Network(height="100%" width="100%", bgcolor="#222222", font_color=True)
         net.set_options(open("options/default.txt").read())
         # net.show_buttons(filter_=['edges', 'nodes'])
 
@@ -170,4 +170,4 @@ if __name__ == '__main__':
     # query3 = df.columns[df.columns.str.contains('Systolic')][0]
     # line(df, [query1, query2], True, 50, True)
     # pair(df, [query1, query2, query3])
-    network(df, "static")
+    network(df, "dynamic")
