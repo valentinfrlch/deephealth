@@ -15,8 +15,8 @@ from pyvis.network import Network
 
 def synthesize(df, value):
     if value == "sleep_delta":
-        v = df["Sleep Analysis [Asleep] (hr)"] - \
-            df["Sleep Analysis [In Bed] (hr)"]
+        v = df["Sleep Analysis [In Bed] (hr)"] - \
+            df["Sleep Analysis [Asleep] (hr)"]
     elif value == "mood":
         v = mood(df)
     else:
@@ -167,10 +167,10 @@ def line(df, data, average=True, window=7, normalize=False):
 
 if __name__ == '__main__':
     df = convert('dataset/export.csv')
-    # correlation(df)
+    correlation(df)
     # query1 = df.columns[df.columns.str.contains('Resting')][0]
     # query2 = df.columns[df.columns.str.contains('Delta')][0]
     # query3 = df.columns[df.columns.str.contains('Systolic')][0]
     # line(df, [query1, query2], True, 50, True)
     # pair(df, [query1, query2, query3])
-    network(df, "dynamic")
+    network(df, "static")
