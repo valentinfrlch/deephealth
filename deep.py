@@ -1,10 +1,5 @@
-from multiprocessing.sharedctypes import Value
-from re import T
-from matplotlib.ft2font import LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH
 import pandas as pd
 import matplotlib.pyplot as plt
-from pyautogui import size
-from pygments import highlight
 import seaborn as sns
 import json
 import networkx as nx
@@ -49,7 +44,10 @@ def mood(df):
             # locate row with matching date
             date = df.loc[df['Date'] == d]
             # get index of row
-            i = date.index[0]
+            try:
+                i = date.index[0]
+            except IndexError:
+                continue
             # insert happiness and tags into dataframe at index
             df.at[i, 'Mood'] = h
             for v in tag_values:
@@ -111,8 +109,7 @@ def network(df, style):
         # save the figure to file
         plt.savefig('visualisations/static_network.png')
     elif style == "dynamic":
-        net = Network(height="900px", width="100%",
-                      bgcolor="#222222", font_color=True)
+        net = Network(bgcolor="#222222", font_color=True)
         net.set_options(open("options/default.txt").read())
         # net.show_buttons(filter_=['edges', 'nodes'])
 

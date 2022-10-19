@@ -1,3 +1,6 @@
 pandas
 matplotlib
 seaborn
+pyvis
+networkx
+plotly
