@@ -4,3 +4,7 @@ seaborn
 pyvis
 networkx
 plotly
+statsmodels
+numpy
+lightgbm
+sklearn

@@ -1,4 +1,3 @@
-from asyncio import futures
 from deep import *
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.graphics.tsaplots import plot_acf
