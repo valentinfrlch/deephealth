@@ -70,6 +70,8 @@ def predict(df, datapoint, horizon=24*7, plot=False):
     
     #calculate MAE
     mae = np.round(mean_absolute_error(y_test, predictions), 3)
+    # calculate accuracy
+    accuracy = str(np.round(1 - mae / y_test.mean(), 3) * 100) + "%"
     
     kernel_size = 10
     kernel = np.ones(kernel_size) / kernel_size
@@ -82,16 +84,16 @@ def predict(df, datapoint, horizon=24*7, plot=False):
     #plot reality vs prediction for the last week of the dataset
     if plot:
         fig = plt.figure(figsize=(16,6))
-        plt.title(f'{datapoint} Real vs Prediction - MAE {mae}', fontsize=20)
+        plt.title(f'{datapoint} Real vs Prediction - {accuracy}', fontsize=20)
         plt.plot(y_test, color='lightblue')
         plt.plot(pd.Series(predictions, index=y_test.index), color='black')
         plt.legend(labels=['Real', 'Prediction'], fontsize=16)
         plt.grid()
         #save the plot
-        plt.savefig(f'./visualisations/plots/{datapoint}.png')
-    return model
+        plt.savefig(f'./visualisations/training_plots/{datapoint}.png')
+    return model, accuracy
     
-def importance(model):
+def importance(model, dp):
     #create a dataframe with the variable importances of the model
     df_importances = pd.DataFrame({
         'feature': model.feature_name_,
@@ -99,8 +101,11 @@ def importance(model):
     }).sort_values(by='importance', ascending=False)
     
     #plot variable importances of the model
-    plt.title('Variable Importances', fontsize=16)
-    sns.barplot(x=df_importances.importance, y=df_importances.feature, orient='h')
+    plt.title(f'Variable Importances - {dp}', fontsize=16)
+    # only show top 10
+    sns.barplot(x='importance', y='feature', data=df_importances.iloc[:20,:], palette='Blues_d', orient='h')
+    # change size of plot
+    plt.gcf().set_size_inches(15, 4)
     plt.show()
     
 def train(df):
@@ -165,7 +170,7 @@ def next_week(df, horizon=24*7):
         # add a red line to show where the prediction starts
         plt.axvline(x=X_test.index[-1], color='red')
         plt.grid()
-        plt.show()
+        plt.savefig(f'./visualisations/predictions/{dp}.png')
         
         
         
@@ -173,7 +178,18 @@ def next_week(df, horizon=24*7):
     
     
 if __name__ == '__main__':
+    accuracies = []
     df = preprocess("dataset/export.csv")
-    next_week(df)
-    
+    #next_week(df)
+    for dp in df.columns:
+        try:
+            print(f"Processing {dp}")
+            model, accuracy = predict(df, dp, plot=False)
+            importance(model, dp)
+            accuracies.append((dp, accuracy))
+        except ValueError:
+            continue
+    # get mean of all accuracies
+    mean_accuracy = np.mean([float(acc[1][:-1]) for acc in accuracies])
+    print(f"Mean accuracy: {mean_accuracy}%")
     
