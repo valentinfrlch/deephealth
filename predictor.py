@@ -1,3 +1,4 @@
+from asyncio import futures
 from deep import *
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.graphics.tsaplots import plot_acf
@@ -136,8 +137,36 @@ def next_week(df, horizon=24*7):
         # use model to predict future week
         Y = model.predict(X_test)
         
-        # add predicted future week to dataframe
-        df[dp] = np.append(df[dp], Y)
+        
+        kernel_size = 10
+        kernel = np.ones(kernel_size) / kernel_size
+        Y = np.convolve(Y, kernel, mode='same')
+        past_data = df[dp]
+        past_data = past_data.rolling(window=kernel_size).mean()
+        
+        # Y to dataframe
+        # remove last 24 hours
+        Y = pd.DataFrame(Y, columns=[dp])
+        Y = Y.iloc[:-7,:] # remove last 24 hours
+        
+        merged = pd.merge(past_data, Y, how='outer')
+        past = merged[dp].iloc[:-horizon]
+        future = merged[dp].iloc[-horizon:]
+        
+        # visualize past data and add predicted data in another color
+        fig = plt.figure(figsize=(16,6))
+        plt.title(f'{dp} Prediction', fontsize=20)
+        # different colors for past and future data
+        # lightblue for past data and orange for future data
+        plt.plot(past, color='lightblue')
+        plt.plot(future, color='orange')
+        # plt.plot(merged)
+        plt.legend(labels=['Past Data', 'Predicted Future'], fontsize=16)
+        # add a red line to show where the prediction starts
+        plt.axvline(x=X_test.index[-1], color='red')
+        plt.grid()
+        plt.show()
+        
         
         
     
