@@ -14,6 +14,8 @@ def synthesize(df, value):
             df["Sleep Analysis [Asleep] (hr)"]
     elif value == "mood":
         v = mood(df)
+    elif value == "audio":
+        v = audio(df)
     else:
         v = None
     return v
@@ -55,6 +57,12 @@ def mood(df):
                     df.at[i, v] = 1
                 else:
                     df.at[i, v] = 0
+                    
+                    
+def audio(df):
+    # add the higher value of headphone and environmental audio exposure
+    max_audio_exposure = df[["Headphone Audio Exposure (dBASPL)", "Environmental Audio Exposure (dBASPL)"]].max(axis=1)
+    return max_audio_exposure
 
 
 def convert(csv):
@@ -68,6 +76,8 @@ def convert(csv):
     # get index of column "Sleep Analysis [Asleep] (hr)"
     i = df.columns.get_loc("Sleep Analysis [Asleep] (hr)")
     df.insert(i, "Sleep Delta (hr)", synthesize(df, "sleep_delta"))
+    i = df.columns.get_loc("Headphone Audio Exposure (dBASPL)")
+    df.insert(i, "Max Audio Exposure (dBASPL)", synthesize(df, "audio"))
     mood(df)
     print("converted")
     return df
@@ -87,7 +97,7 @@ def correlation(df):
     plt.savefig('visualisations/correlation.png')
 
 
-def network(df, style):
+def network(df, style, threshold=0.5):
     corr = df.corr()
     # correlation network graph
     # instantiate networkx graph
@@ -101,7 +111,7 @@ def network(df, style):
         # add edges = correlation values
         for i in range(len(corr.columns)):
             for j in range(i):
-                if abs(corr.iloc[i, j]) > 0.5:
+                if abs(corr.iloc[i, j]) > threshold:
                     net.add_edge(corr.columns[i], corr.columns[j])
         pos = nx.spring_layout(net, k=1.5, iterations=50)
         nx.draw(net, pos, with_labels=True, node_color='blue',
@@ -153,8 +163,8 @@ def line(df, data, average=True, window=7, normalize=False):
         if average:
             avg = df[data[i]].rolling(window=window).mean()
             # plot rolling average
-            plt.plot(df['Date'], avg, color='black',
-                     linewidth=3, label=data[i] + " average")
+            plt.plot(df['Date'], avg, color="C" + str(i),
+                     linewidth=5, label=data[i] + " average")
         plt.plot(df['Date'], df[data[i]], label=data[i], linewidth=1)
         # add legend with custom size
         plt.legend(prop={'size': 40})
@@ -164,10 +174,10 @@ def line(df, data, average=True, window=7, normalize=False):
 
 if __name__ == '__main__':
     df = convert('dataset/export.csv')
-    correlation(df)
-    # query1 = df.columns[df.columns.str.contains('Resting')][0]
-    # query2 = df.columns[df.columns.str.contains('Delta')][0]
-    # query3 = df.columns[df.columns.str.contains('Systolic')][0]
-    # line(df, [query1, query2], True, 50, True)
-    # pair(df, [query1, query2, query3])
-    network(df, "dynamic")
+    # correlation(df)
+    query1 = df.columns[df.columns.str.contains('Heart Rate Var')][0]
+    query2 = df.columns[df.columns.str.contains('Mood')][0]
+    query3 = df.columns[df.columns.str.contains('Max')][0]
+    line(df, [query1, query2, query3], True, 50, True)
+    # pair(df, [query1, query2])
+    # network(df, "dynamic", 0.3)
