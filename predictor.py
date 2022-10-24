@@ -128,7 +128,7 @@ def preprocess(path):
     return df
 
 
-def next_week(df, horizon=7):
+def predict_next(df, horizon=7):
     for dp in df.columns:
         print(f"Processing {dp}")
         X = df.drop(dp, axis=1)
@@ -188,5 +188,5 @@ if __name__ == '__main__':
     # get mean of all accuracies
     mean_accuracy = np.mean([float(acc[1][:-1]) for acc in accuracies])
     print(f"Mean accuracy: {mean_accuracy}%") """
-    train(df, horizon=1300)
+    predict_next(df, horizon=7)
     
