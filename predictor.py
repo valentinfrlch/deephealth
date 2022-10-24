@@ -53,7 +53,7 @@ def autocorrelation(df, datapoint):
     plt.show()
 
 
-def predict(df, datapoint, horizon=24*7, plot=False):
+def predict(df, datapoint, horizon=7, plot=False):
     X = df.drop(datapoint, axis=1)
     y = df[datapoint]
     
@@ -66,8 +66,7 @@ def predict(df, datapoint, horizon=24*7, plot=False):
     model.fit(X_model, y_model)
     predictions = model.predict(X_test)
     
-    
-    #calculate MAE
+    #calculate mean average error
     mae = np.round(mean_absolute_error(y_test, predictions), 3)
     # calculate accuracy
     accuracy = str(np.round(1 - mae / y_test.mean(), 3) * 100) + "%"
@@ -117,7 +116,7 @@ def train(df):
         print(f"Processing {dp}")
         try:
             lambda dp:re.sub('[^A-Za-z0-9_]+', '', dp)
-            model = predict(df, dp)
+            mode, accuracy = predict(df, dp)
         except ValueError:
             continue
 
@@ -131,13 +130,15 @@ def preprocess(path):
     df = df.drop('Date', axis=1)
     return df
 
-def next_week(df, horizon=24*7):
+
+def next_week(df, horizon=7):
     for dp in df.columns:
+        print(f"Processing {dp}")
         X = df.drop(dp, axis=1)
         # take last week of data to validate model
         X_test = X.iloc[-horizon:,:]
         
-        model = predict(df, dp)
+        model, accuracy = predict(df, dp)
         # use model to predict future week
         Y = model.predict(X_test)
         
@@ -167,7 +168,7 @@ def next_week(df, horizon=24*7):
         # plt.plot(merged)
         plt.legend(labels=['Past Data', 'Predicted Future'], fontsize=16)
         # add a red line to show where the prediction starts
-        plt.axvline(x=X_test.index[-1], color='red')
+        # plt.axvline(x=X_test.index[-1], color='red')
         plt.grid()
         plt.savefig(f'./visualisations/predictions/{dp}.png')
         
@@ -179,16 +180,19 @@ def next_week(df, horizon=24*7):
 if __name__ == '__main__':
     accuracies = []
     df = preprocess("dataset/export.csv")
+    """
     #next_week(df)
     for dp in df.columns:
         try:
             print(f"Processing {dp}")
-            model, accuracy = predict(df, dp, plot=False)
-            importance(model, dp)
+            model, accuracy = predict(df, dp, plot=False))
+            # importance(model, dp)
             accuracies.append((dp, accuracy))
         except ValueError:
+            print(f"Error processing {dp}")
             continue
     # get mean of all accuracies
     mean_accuracy = np.mean([float(acc[1][:-1]) for acc in accuracies])
-    print(f"Mean accuracy: {mean_accuracy}%")
+    print(f"Mean accuracy: {mean_accuracy}%") """
+    next_week(df, horizon=30)
     
