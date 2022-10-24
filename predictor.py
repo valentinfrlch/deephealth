@@ -106,17 +106,14 @@ def importance(model, dp):
     plt.gcf().set_size_inches(15, 4)
     plt.show()
     
-def train(df):
-    dp = "RespiratoryRatecountmin"
-    lambda dp:re.sub('[^A-Za-z0-9_]+', '', dp)
-
+def train(df, horizon=7):
     # iterate through columns
     for dp in df.columns:
         # show progress
         print(f"Processing {dp}")
         try:
             lambda dp:re.sub('[^A-Za-z0-9_]+', '', dp)
-            mode, accuracy = predict(df, dp)
+            mode, accuracy = predict(df, dp, horizon=horizon, plot=True)
         except ValueError:
             continue
 
@@ -143,18 +140,15 @@ def next_week(df, horizon=7):
         Y = model.predict(X_test)
         
         
-        kernel_size = 10
-        kernel = np.ones(kernel_size) / kernel_size
-        Y = np.convolve(Y, kernel, mode='same')
         past_data = df[dp]
-        past_data = past_data.rolling(window=kernel_size).mean()
+        # past_data = past_data.rolling(window=kernel_size).mean()
         
-        # Y to dataframe
-        # remove last 24 hours
+        # convert Y ndarray to dataframe
         Y = pd.DataFrame(Y, columns=[dp])
-        Y = Y.iloc[:-7,:] # remove last 24 hours
         
         merged = pd.merge(past_data, Y, how='outer')
+        # calculate rolling average
+        merged = merged.rolling(window=10).mean()
         past = merged[dp].iloc[:-horizon]
         future = merged[dp].iloc[-horizon:]
         
@@ -194,5 +188,5 @@ if __name__ == '__main__':
     # get mean of all accuracies
     mean_accuracy = np.mean([float(acc[1][:-1]) for acc in accuracies])
     print(f"Mean accuracy: {mean_accuracy}%") """
-    next_week(df, horizon=30)
+    train(df, horizon=1300)
     
