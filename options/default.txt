@@ -19,24 +19,24 @@ var options = {
 			"inherit": true,
 			"highlight": "#f0ad4e"
 		},
-		"smooth": false
+		"smooth": true
 	},
 	"physics": {
 		"barnesHut": {
 			"theta": 0.5,
-			"springLength": 200,
+			"springLength": 700,
 			"damping": 0.3,
 			"avoidOverlap": 0.7,
 			"gravitationalConstant": -40000
 		},
-		"maxVelocity": 1,
+		"maxVelocity": 2,
 		"minVelocity": 0.1,
-		"timestep": 0.5
+		"timestep": 0.8
 	},
 	"stabilization": {
 		"enabled": true,
-		"iterations": 1000,
-		"updateInterval": 100,
+		"iterations": 10000,
+		"updateInterval": 50,
 		"onlyDynamicEdges": false,
 		"fit": true
 	}
