@@ -122,7 +122,7 @@ def network(df, style, threshold=0.5):
         # save the figure to file
         plt.savefig('visualisations/static_network.png')
     elif style == "dynamic":
-        net = Network(height='1500px', width='100%', directed=False, notebook=False, neighborhood_highlight=False, select_menu=False, filter_menu=False, bgcolor='#222222', font_color="white", layout=None, heading='', cdn_resources='local')
+        net = Network(height='1300px', width='100%', directed=False, notebook=False, neighborhood_highlight=False, select_menu=False, filter_menu=False, bgcolor='#222222', font_color="white", layout=None, heading='', cdn_resources='local')
         net.set_options(open("options/default.txt").read())
         # net.show_buttons(filter_=['edges', 'nodes'])
 
@@ -183,4 +183,4 @@ if __name__ == '__main__':
     query3 = df.columns[df.columns.str.contains('Max')][0]
     # line(df, [query1, query2, query3], True, 50, True)
     # pair(df, [query1, query2])
-    network(df, "dynamic", 0.75)
+    network(df, "dynamic", 0.8)
