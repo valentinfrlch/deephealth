@@ -54,9 +54,12 @@ def mood(df):
             df.at[i, 'Mood'] = h
             for v in tag_values:
                 if v in t:
-                    df.at[i, v] = 1
+                    #  insert True if tag is in list
+                    df.at[i, v] = True
+                    # convert column to boolean
                 else:
-                    df.at[i, v] = 0
+                    df.at[i, v] = False
+                df[v] = df[v].astype(bool)
                     
                     
 def audio(df):
@@ -174,10 +177,10 @@ def line(df, data, average=True, window=7, normalize=False):
 
 if __name__ == '__main__':
     df = convert('dataset/export.csv')
-    # correlation(df)
+    correlation(df)
     query1 = df.columns[df.columns.str.contains('Heart Rate Var')][0]
     query2 = df.columns[df.columns.str.contains('Mood')][0]
     query3 = df.columns[df.columns.str.contains('Max')][0]
     # line(df, [query1, query2, query3], True, 50, True)
     # pair(df, [query1, query2])
-    network(df, "dynamic", 0.75)
+    # network(df, "dynamic", 0.75)

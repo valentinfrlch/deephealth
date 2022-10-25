@@ -193,5 +193,5 @@ if __name__ == '__main__':
     print(f"Mean accuracy: {mean_accuracy}%") """
     
     
-    # predict_next(df, horizon=90)
-    decompose(df, 'Mood')
+    predict_next(df, horizon=90)
+    # decompose(df, 'Mood')
