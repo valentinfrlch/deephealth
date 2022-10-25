@@ -1,3 +1,4 @@
+from email.utils import decode_params
 from deep import *
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.graphics.tsaplots import plot_acf
@@ -69,7 +70,7 @@ def predict(df, datapoint, horizon=7, plot=False):
     #calculate mean average error
     mae = np.round(mean_absolute_error(y_test, predictions), 3)
     # calculate accuracy
-    accuracy = str(np.round(1 - mae / y_test.mean(), 3) * 100) + "%"
+    accuracy = np.round(1 - mae / y_test.mean(), 3) * 100
     
     kernel_size = 10
     kernel = np.ones(kernel_size) / kernel_size
@@ -130,42 +131,44 @@ def preprocess(path):
 
 def predict_next(df, horizon=7):
     for dp in df.columns:
-        print(f"Processing {dp}")
-        X = df.drop(dp, axis=1)
-        # take last week of data to validate model
-        X_test = X.iloc[-horizon:,:]
-        
-        model, accuracy = predict(df, dp)
-        # use model to predict future week
-        Y = model.predict(X_test)
-        
-        
-        past_data = df[dp]
-        # past_data = past_data.rolling(window=kernel_size).mean()
-        
-        # convert Y ndarray to dataframe
-        Y = pd.DataFrame(Y, columns=[dp])
-        
-        merged = pd.merge(past_data, Y, how='outer')
-        # calculate rolling average
-        merged = merged.rolling(window=10).mean()
-        past = merged[dp].iloc[:-horizon]
-        future = merged[dp].iloc[-horizon:]
-        
-        # visualize past data and add predicted data in another color
-        fig = plt.figure(figsize=(16,6))
-        plt.title(f'{dp} Prediction', fontsize=20)
-        # different colors for past and future data
-        # lightblue for past data and orange for future data
-        plt.plot(past, color='lightblue')
-        plt.plot(future, color='orange')
-        # plt.plot(merged)
-        plt.legend(labels=['Past Data', 'Predicted Future'], fontsize=16)
-        # add a red line to show where the prediction starts
-        # plt.axvline(x=X_test.index[-1], color='red')
-        plt.grid()
-        plt.savefig(f'./visualisations/predictions/{dp}.png')
-        
+        try:
+            print(f"Processing {dp}")
+            X = df.drop(dp, axis=1)
+            # take last week of data to validate model
+            X_test = X.iloc[-horizon:,:]
+            
+            model, accuracy = predict(df, dp)
+            # use model to predict future week
+            Y = model.predict(X_test)
+            
+            
+            past_data = df[dp]
+            # past_data = past_data.rolling(window=kernel_size).mean()
+            
+            # convert Y ndarray to dataframe
+            Y = pd.DataFrame(Y, columns=[dp])
+            
+            merged = pd.merge(past_data, Y, how='outer')
+            # calculate rolling average
+            merged = merged.rolling(window=10).mean()
+            past = merged[dp].iloc[:-horizon]
+            future = merged[dp].iloc[-horizon:]
+            
+            # visualize past data and add predicted data in another color
+            fig = plt.figure(figsize=(16,6))
+            plt.title(f'{dp} Prediction - {int(accuracy)}%', fontsize=20)
+            # different colors for past and future data
+            # lightblue for past data and orange for future data
+            plt.plot(past, color='lightblue')
+            plt.plot(future, color='orange')
+            # plt.plot(merged)
+            plt.legend(labels=['Past Data', 'Predicted Future'], fontsize=16)
+            # add a red line to show where the prediction starts
+            # plt.axvline(x=X_test.index[-1], color='red')
+            plt.grid()
+            plt.savefig(f'./visualisations/predictions/{dp}.png')
+        except Exception as e:
+            continue
         
         
     
@@ -188,5 +191,7 @@ if __name__ == '__main__':
     # get mean of all accuracies
     mean_accuracy = np.mean([float(acc[1][:-1]) for acc in accuracies])
     print(f"Mean accuracy: {mean_accuracy}%") """
-    predict_next(df, horizon=7)
     
+    
+    # predict_next(df, horizon=90)
+    decompose(df, 'Mood')
