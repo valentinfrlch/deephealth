@@ -178,9 +178,12 @@ def line(df, data, average=True, window=7, normalize=False):
 if __name__ == '__main__':
     df = convert('dataset/export.csv')
     # correlation(df)
+    t = df.columns
+    # to list
+    t = t.tolist()
     query1 = df.columns[df.columns.str.contains('Heart Rate Var')][0]
     query2 = df.columns[df.columns.str.contains('Mood')][0]
     query3 = df.columns[df.columns.str.contains('Max')][0]
     # line(df, [query1, query2, query3], True, 50, True)
     # pair(df, [query1, query2])
-    network(df, "dynamic", 0.8)
+    # network(df, "dynamic", 0.8)

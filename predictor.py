@@ -129,7 +129,7 @@ def preprocess(path):
     return df
 
 
-def predict_next(df, horizon=7):
+def predict_next(df, horizon=7, smoothness=10):
     for dp in df.columns:
         try:
             print(f"Processing {dp}")
@@ -150,22 +150,37 @@ def predict_next(df, horizon=7):
             
             merged = pd.merge(past_data, Y, how='outer')
             # calculate rolling average
-            merged = merged.rolling(window=10).mean()
+            merged = merged.rolling(window=smoothness).mean()
             past = merged[dp].iloc[:-horizon]
             future = merged[dp].iloc[-horizon:]
             
-            # visualize past data and add predicted data in another color
-            fig = plt.figure(figsize=(16,6))
+            
+            plt.figure(figsize=(16,6), facecolor='#021631')
+            ax = plt.axes()
             plt.title(f'{dp} Prediction - {int(accuracy)}%', fontsize=20)
-            # different colors for past and future data
-            # lightblue for past data and orange for future data
+            
+            plt.grid(color='#6E7A8B')
+            
+            ax.set_facecolor('#021631')
+            
+            ax.spines['bottom'].set_color('#6E7A8B')
+            ax.spines['top'].set_color('#6E7A8B')
+            ax.spines['left'].set_color('#6E7A8B')
+            ax.spines['right'].set_color('#6E7A8B')
+            # set axis tick color
+            ax.tick_params(axis='x', colors='#6E7A8B')
+            ax.tick_params(axis='y', colors='#6E7A8B')
+            
+            #set text color
+            plt.rcParams['text.color'] = 'white'
+            
+            # plot the data
             plt.plot(past, color='lightblue')
             plt.plot(future, color='orange')
             # plt.plot(merged)
             plt.legend(labels=['Past Data', 'Predicted Future'], fontsize=16)
-            # add a red line to show where the prediction starts
-            # plt.axvline(x=X_test.index[-1], color='red')
-            plt.grid()
+            
+            
             plt.savefig(f'./visualisations/predictions/{dp}.png')
         except Exception as e:
             continue
@@ -193,5 +208,5 @@ if __name__ == '__main__':
     print(f"Mean accuracy: {mean_accuracy}%") """
     
     
-    predict_next(df, horizon=90)
+    predict_next(df, horizon=90, smoothness=100)
     # decompose(df, 'Mood')
