@@ -1,4 +1,5 @@
 from email.utils import decode_params
+from turtle import color
 from deep import *
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.graphics.tsaplots import plot_acf
@@ -157,7 +158,7 @@ def predict_next(df, horizon=7, smoothness=10):
             
             plt.figure(figsize=(16,6), facecolor='#021631')
             ax = plt.axes()
-            plt.title(f'{dp} Prediction - {int(accuracy)}%', fontsize=20)
+            plt.title(f'{dp} Prediction - {int(accuracy)}%', fontsize=20, color='white')
             
             plt.grid(color='#6E7A8B')
             
@@ -175,8 +176,8 @@ def predict_next(df, horizon=7, smoothness=10):
             plt.rcParams['text.color'] = 'white'
             
             # plot the data
-            plt.plot(past, color='lightblue')
-            plt.plot(future, color='orange')
+            plt.plot(past, color='#56EEF4')
+            plt.plot(future, color='#ee9b00')
             # plt.plot(merged)
             plt.legend(labels=['Past Data', 'Predicted Future'], fontsize=16)
             
@@ -208,5 +209,5 @@ if __name__ == '__main__':
     print(f"Mean accuracy: {mean_accuracy}%") """
     
     
-    predict_next(df, horizon=90, smoothness=100)
+    predict_next(df, horizon=90, smoothness=20)
     # decompose(df, 'Mood')
