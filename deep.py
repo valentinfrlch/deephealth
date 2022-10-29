@@ -73,6 +73,14 @@ def convert(csv):
     df = pd.read_csv(csv)
     # convert date column to datetime
     df.Date = pd.to_datetime(df.Date)
+    
+    # create columns for every weekday and set to True if date is on that weekday
+    weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    for day in weekdays:
+        df[day] = df["Date"].dt.day_name() == day
+        df[day] = df[day].astype(bool)
+    
+    
     df.dropna(axis=1, how='all', inplace=True)
     # interpolate missing values in dataframe
     df.interpolate(method='ffill', axis=0, inplace=True)
@@ -177,7 +185,7 @@ def line(df, data, average=True, window=7, normalize=False):
 
 if __name__ == '__main__':
     df = convert('dataset/export.csv')
-    # correlation(df)
+    correlation(df)
     t = df.columns
     # to list
     t = t.tolist()
@@ -186,4 +194,4 @@ if __name__ == '__main__':
     query3 = df.columns[df.columns.str.contains('Max')][0]
     # line(df, [query1, query2, query3], True, 50, True)
     # pair(df, [query1, query2])
-    network(df, "dynamic", 0.75)
+    # network(df, "dynamic", 0.75)

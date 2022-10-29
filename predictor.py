@@ -3,6 +3,7 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.graphics.tsaplots import plot_acf
 import numpy as np
 import re
+import progressbar
 
 from lightgbm import LGBMRegressor
 from sklearn.metrics import mean_absolute_error
@@ -52,11 +53,11 @@ def autocorrelation(df, datapoint):
     plt.show()
 
 
-def predict(df, datapoint, horizon=7, plot=False):
+def predict(df, datapoint, horizon=7, plot=False, smoothness=10):
     X = df.drop(datapoint, axis=1)
     y = df[datapoint]
     
-    # take last week of data to validate model
+    
     X_model, X_test = X.iloc[:-horizon,:], X.iloc[-horizon:,:]
     y_model, y_test = y.iloc[:-horizon], y.iloc[-horizon:]
     
@@ -66,40 +67,51 @@ def predict(df, datapoint, horizon=7, plot=False):
     predictions = model.predict(X_test)
     
     # calculate MAPE between predictions and test data
-    accuracy = round((mean_absolute_error(y_test, predictions)), 0)
+    accuracy = 0
     
     
-    kernel_size = 10
-    kernel = np.ones(kernel_size) / kernel_size
-    predictions = np.convolve(predictions, kernel, mode='same')
-    
-    #rolling average of pandas Series
-    y_test = y_test.rolling(window=kernel_size).mean()
+    # rolling average of predictions and y_test
+    y_test = y_test.rolling(smoothness).mean()
+    # predictions to dataframe
+    predictions = pd.DataFrame(predictions, index=y_test.index, columns=[datapoint])
+    # rolling average of predictions
+    predictions = predictions.rolling(smoothness).mean()
     
 
     #plot reality vs prediction for the last week of the dataset
     if plot:
-        plt.figure(figsize=(16,6), facecolor='#021631')
-        plt.title(f'{datapoint} Real vs Prediction - {accuracy}', fontsize=20)
-        plt.plot(y_test, color='00E89D')
-        plt.plot(pd.Series(predictions, index=y_test.index), color='0078FF')
-        plt.legend(labels=['Real', 'Prediction'], fontsize=16)
-        
-        ax = plt.axes()
-        ax.set_facecolor('#021631')
-        plt.grid(color='#6E7A8B')
+            plt.figure(figsize=(16,6), facecolor='#021631')
+            ax = plt.axes()
+            plt.title(f'{name_reconstruct(datapoint)} measurements vs deepHealth model', fontsize=20, color='white')
             
-        ax.spines['bottom'].set_color('#6E7A8B')
-        ax.spines['top'].set_color('#6E7A8B')
-        ax.spines['left'].set_color('#6E7A8B')
-        ax.spines['right'].set_color('#6E7A8B')
+            plt.grid(color='#6E7A8B')
+            
+            ax.set_facecolor('#021631')
+            
+            ax.spines['bottom'].set_color('#6E7A8B')
+            ax.spines['top'].set_color('#6E7A8B')
+            ax.spines['left'].set_color('#6E7A8B')
+            ax.spines['right'].set_color('#6E7A8B')
             # set axis tick color
-        ax.tick_params(axis='x', colors='#6E7A8B')
-        ax.tick_params(axis='y', colors='#6E7A8B')
-        plt.rcParams['text.color'] = 'white'
-        
-        #save the plot
-        plt.savefig(f'./visualisations/training_plots/{datapoint}.png')
+            ax.tick_params(axis='x', colors='#6E7A8B')
+            ax.tick_params(axis='y', colors='#6E7A8B')
+            
+            #set text color
+            plt.rcParams['text.color'] = 'white'
+            plt.rcParams['axes.labelcolor'] = 'white'
+            
+            # set prediction index to same index as y_test
+            predictions = pd.Series(predictions, index=y_test.index)
+            
+            plt.plot(y_test, label='Measurements', color='#00E89D')
+            plt.plot(predictions, label='Prediction', color='#77B7EE')
+            
+            plt.savefig(f'./visualisations/training_plots/{name_reconstruct(datapoint)}.png')
+            # close the plot
+            # remove plt from memory
+            plt.close()
+            plt.clf()
+            
     return model, accuracy
     
 def importance(model, dp):
@@ -116,15 +128,17 @@ def importance(model, dp):
     # change size of plot
     plt.gcf().set_size_inches(15, 4)
     plt.show()
+    plt.close()
+    plt.clf()
     
-def train(df, horizon=7):
+def train(df, horizon=7, smoothness=10):
     # iterate through columns
     for dp in df.columns:
         # show progress
         print(f"Processing {dp}")
         try:
             lambda dp:re.sub('[^A-Za-z0-9_]+', '', dp)
-            mode, accuracy = predict(df, dp, horizon=horizon, plot=True)
+            mode, accuracy = predict(df, dp, horizon=horizon, plot=True, smoothness=smoothness)
         except ValueError:
             continue
 
@@ -132,6 +146,7 @@ def preprocess(path):
     df = convert(path)
     df = df.select_dtypes(exclude=['object'])
     df = df.rename(columns = lambda x:re.sub('[^A-Za-z0-9_]+', '', x))
+    # add day of week based on timestamp
     # remove "Date" column
     # drop NaN or object
     # convert object to float
@@ -140,22 +155,24 @@ def preprocess(path):
 
 
 def predict_next(df, horizon=7, smoothness=10):
+    # create a progress bar
+    bar = progressbar.ProgressBar(maxval=len(df.columns), widgets=['Initializing Model...', progressbar.Percentage(), " ", progressbar.Bar('█', '|')], term_width=200)
+    bar.start()
     for dp in df.columns:
         try:
-            print(f"Processing {dp}")
+            bar.update(bar.currval + 1)
+            # change the title of the progress bar
+            bar.widgets[0] = f'Processing {name_reconstruct(dp, True, True)} '
             X = df.drop(dp, axis=1)
             # take last week of data to validate model
             X_test = X.iloc[-horizon:,:]
             
             model, accuracy = predict(df, dp)
-            # use model to predict future week
             Y = model.predict(X_test)
             
             
             past_data = df[dp]
-            # past_data = past_data.rolling(window=kernel_size).mean()
             
-            # convert Y ndarray to dataframe
             Y = pd.DataFrame(Y, columns=[dp])
             
             merged = pd.merge(past_data, Y, how='outer')
@@ -165,9 +182,10 @@ def predict_next(df, horizon=7, smoothness=10):
             future = merged[dp].iloc[-horizon:]
             
             
+            # styling of plot
             plt.figure(figsize=(16,6), facecolor='#021631')
             ax = plt.axes()
-            plt.title(f'{dp} Prediction - {int(accuracy)}%', fontsize=20, color='white')
+            plt.title(f'{name_reconstruct(dp)} Prediction', fontsize=20, color='white')
             
             plt.grid(color='#6E7A8B')
             
@@ -189,14 +207,38 @@ def predict_next(df, horizon=7, smoothness=10):
             plt.plot(future, color='#77B7EE')  # 0078FF
             # connect the last point of past data to the first point of future data
             plt.plot([len(past)-1, len(past)], [past.iloc[-1], future.iloc[0]], color='#77B7EE')
-            plt.plot(past.index[-1], past.iloc[-1], 'o', color='#00E89D')
+            plt.plot(past.index[-1], past.iloc[-1], 'o', color='#00E89D', markersize=8)
             
-            plt.savefig(f'./visualisations/predictions/{dp}.png')
+            plt.savefig(f'./visualisations/predictions/{name_reconstruct(dp)}.png')
+            # close the plot
+            plt.close()
+            plt.clf()
         except Exception as e:
             continue
         
         
+def name_reconstruct(name, equalize=False, bold=False):
+    # add a space before every capital letter
+    # metrics to ignore
+    metrics = ["dBASPL", "mmHg", "kmhr", "min", "ms", "count", "countmin", "kcal", "g", "kg", "l", "in"]
+    metrics.sort(key=len, reverse=True)
     
+    for metric in metrics:
+        if name.endswith(metric):
+            name = name[:-len(metric)]
+            break
+    name = re.sub(r'(?<!^)(?=[A-Z])', ' ', name)
+    name = name[0].upper() + name[1:]
+    
+    if equalize:
+        # if name is too long, shorten it and add "..."
+        if len(name) > 30:
+            name = name[:27] + "..."
+        name = name.ljust(30)
+    # make the name bold
+    if bold:
+        name = f"\033[1m{name}\033[0m"
+    return name
     
     
 if __name__ == '__main__':
@@ -218,6 +260,8 @@ if __name__ == '__main__':
     print(f"Mean accuracy: {mean_accuracy}%") """
     
     
-    predict_next(df, horizon=90, smoothness=20)
+    # predict_next(df, horizon=90, smoothness=7)
     # decompose(df, 'Mood')
-    # train(df, horizon=90)
+    train(df, horizon=90, smoothness=10)
+    # model, accuracy = predict(df, "Mood", horizon=90, plot=True)
+    # importance(model, 'Mood')

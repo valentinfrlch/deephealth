@@ -8,3 +8,4 @@ statsmodels
 numpy
 lightgbm
 sklearn
+progressbar
