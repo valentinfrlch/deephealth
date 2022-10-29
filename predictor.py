@@ -1,5 +1,3 @@
-from email.utils import decode_params
-from turtle import color
 from deep import *
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.graphics.tsaplots import plot_acf
@@ -7,7 +5,6 @@ import numpy as np
 import re
 
 from lightgbm import LGBMRegressor
-from sklearn.model_selection import TimeSeriesSplit, train_test_split
 from sklearn.metrics import mean_absolute_error
 
 
@@ -68,10 +65,9 @@ def predict(df, datapoint, horizon=7, plot=False):
     model.fit(X_model, y_model)
     predictions = model.predict(X_test)
     
-    #calculate mean average error
-    mae = np.round(mean_absolute_error(y_test, predictions), 3)
-    # calculate accuracy
-    accuracy = np.round(1 - mae / y_test.mean(), 3) * 100
+    # calculate MAPE between predictions and test data
+    accuracy = round((mean_absolute_error(y_test, predictions)), 0)
+    
     
     kernel_size = 10
     kernel = np.ones(kernel_size) / kernel_size
@@ -83,12 +79,25 @@ def predict(df, datapoint, horizon=7, plot=False):
 
     #plot reality vs prediction for the last week of the dataset
     if plot:
-        fig = plt.figure(figsize=(16,6))
+        plt.figure(figsize=(16,6), facecolor='#021631')
         plt.title(f'{datapoint} Real vs Prediction - {accuracy}', fontsize=20)
-        plt.plot(y_test, color='lightblue')
-        plt.plot(pd.Series(predictions, index=y_test.index), color='black')
+        plt.plot(y_test, color='00E89D')
+        plt.plot(pd.Series(predictions, index=y_test.index), color='0078FF')
         plt.legend(labels=['Real', 'Prediction'], fontsize=16)
-        plt.grid()
+        
+        ax = plt.axes()
+        ax.set_facecolor('#021631')
+        plt.grid(color='#6E7A8B')
+            
+        ax.spines['bottom'].set_color('#6E7A8B')
+        ax.spines['top'].set_color('#6E7A8B')
+        ax.spines['left'].set_color('#6E7A8B')
+        ax.spines['right'].set_color('#6E7A8B')
+            # set axis tick color
+        ax.tick_params(axis='x', colors='#6E7A8B')
+        ax.tick_params(axis='y', colors='#6E7A8B')
+        plt.rcParams['text.color'] = 'white'
+        
         #save the plot
         plt.savefig(f'./visualisations/training_plots/{datapoint}.png')
     return model, accuracy
@@ -176,11 +185,11 @@ def predict_next(df, horizon=7, smoothness=10):
             plt.rcParams['text.color'] = 'white'
             
             # plot the data
-            plt.plot(past, color='#56EEF4')
-            plt.plot(future, color='#ee9b00')
-            # plt.plot(merged)
-            plt.legend(labels=['Past Data', 'Predicted Future'], fontsize=16)
-            
+            plt.plot(past, color='#00E89D')  # 488BE3
+            plt.plot(future, color='#77B7EE')  # 0078FF
+            # connect the last point of past data to the first point of future data
+            plt.plot([len(past)-1, len(past)], [past.iloc[-1], future.iloc[0]], color='#77B7EE')
+            plt.plot(past.index[-1], past.iloc[-1], 'o', color='#00E89D')
             
             plt.savefig(f'./visualisations/predictions/{dp}.png')
         except Exception as e:
@@ -211,3 +220,4 @@ if __name__ == '__main__':
     
     predict_next(df, horizon=90, smoothness=20)
     # decompose(df, 'Mood')
+    # train(df, horizon=90)
