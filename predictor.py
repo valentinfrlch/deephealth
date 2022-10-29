@@ -101,7 +101,7 @@ def predict(df, datapoint, horizon=7, plot=False, smoothness=10):
             plt.rcParams['axes.labelcolor'] = 'white'
             
             # set prediction index to same index as y_test
-            predictions = pd.Series(predictions, index=y_test.index)
+            predictions.index = y_test.index
             
             plt.plot(y_test, label='Measurements', color='#00E89D')
             plt.plot(predictions, label='Prediction', color='#77B7EE')
