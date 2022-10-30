@@ -1,12 +1,16 @@
+from tkinter import font
 from deep import *
+import helpers as helpers
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.graphics.tsaplots import plot_acf
 import numpy as np
+from matplotlib import font_manager
 import re
 import progressbar
 
 from lightgbm import LGBMRegressor
 from sklearn.metrics import mean_absolute_error
+from scipy.interpolate import make_interp_spline
 
 
 def decompose(df, datapoint, period=24):
@@ -80,11 +84,22 @@ def predict(df, datapoint, horizon=7, plot=False, smoothness=10):
 
     #plot reality vs prediction for the last week of the dataset
     if plot:
+            # add font
+            font_dir = ["./assets/"]
+            font_files = font_manager.findSystemFonts(fontpaths=font_dir)
+            for font_file in font_files:
+                font_manager.fontManager.addfont(font_file)
+                
+                
             plt.figure(figsize=(16,6), facecolor='#021631')
             ax = plt.axes()
-            plt.title(f'{name_reconstruct(datapoint)} measurements vs deepHealth model', fontsize=20, color='white')
             
             plt.grid(color='#6E7A8B')
+            
+            for tick in ax.get_xticklabels():
+                tick.set_fontname("Product Sans")
+            for tick in ax.get_yticklabels():
+                tick.set_fontname("Product Sans")
             
             ax.set_facecolor('#021631')
             
@@ -92,16 +107,18 @@ def predict(df, datapoint, horizon=7, plot=False, smoothness=10):
             ax.spines['top'].set_color('#6E7A8B')
             ax.spines['left'].set_color('#6E7A8B')
             ax.spines['right'].set_color('#6E7A8B')
+            
+            ax.set_title(f'{name_reconstruct(datapoint)} Measurements vs deepHealth Model', fontsize=20, color='white', fontname='Product Sans')
             # set axis tick color
             ax.tick_params(axis='x', colors='#6E7A8B')
             ax.tick_params(axis='y', colors='#6E7A8B')
             
+            
             #set text color
             plt.rcParams['text.color'] = 'white'
-            plt.rcParams['axes.labelcolor'] = 'white'
             
             # set prediction index to same index as y_test
-            predictions.index = y_test.index
+            predictions.index = y_test.index    
             
             plt.plot(y_test, label='Measurements', color='#00E89D')
             plt.plot(predictions, label='Prediction', color='#77B7EE')
@@ -111,6 +128,9 @@ def predict(df, datapoint, horizon=7, plot=False, smoothness=10):
             # remove plt from memory
             plt.close()
             plt.clf()
+            
+            # add logo to plot
+            helpers.logo(f'./visualisations/training_plots/{name_reconstruct(datapoint)}.png')
             
     return model, accuracy
     
@@ -139,18 +159,15 @@ def train(df, horizon=7, smoothness=10):
         try:
             lambda dp:re.sub('[^A-Za-z0-9_]+', '', dp)
             mode, accuracy = predict(df, dp, horizon=horizon, plot=True, smoothness=smoothness)
-        except ValueError:
+        except ValueError as e:
+            print(e)
             continue
 
 def preprocess(path):
     df = convert(path)
     df = df.select_dtypes(exclude=['object'])
     df = df.rename(columns = lambda x:re.sub('[^A-Za-z0-9_]+', '', x))
-    # add day of week based on timestamp
-    # remove "Date" column
-    # drop NaN or object
-    # convert object to float
-    df = df.drop('Date', axis=1)
+    df = df.set_index('Date')
     return df
 
 
@@ -185,6 +202,12 @@ def predict_next(df, horizon=7, smoothness=10):
             # styling of plot
             plt.figure(figsize=(16,6), facecolor='#021631')
             ax = plt.axes()
+            
+            font_dir = ["./assets/"]
+            font_files = font_manager.findSystemFonts(fontpaths=font_dir)
+            for font_file in font_files:
+                font_manager.fontManager.addfont(font_file)
+                
             plt.title(f'{name_reconstruct(dp)} Prediction', fontsize=20, color='white')
             
             plt.grid(color='#6E7A8B')
@@ -201,7 +224,7 @@ def predict_next(df, horizon=7, smoothness=10):
             
             #set text color
             plt.rcParams['text.color'] = 'white'
-            
+            plt.rcParams["font.family"] = "Product Sans"
             # plot the data
             plt.plot(past, color='#00E89D')  # 488BE3
             plt.plot(future, color='#77B7EE')  # 0078FF
@@ -213,6 +236,9 @@ def predict_next(df, horizon=7, smoothness=10):
             # close the plot
             plt.close()
             plt.clf()
+            
+            # add logo with helper function
+            helpers.logo(f'./visualisations/predictions/{name_reconstruct(dp)}.png')
         except Exception as e:
             continue
         
@@ -260,8 +286,8 @@ if __name__ == '__main__':
     print(f"Mean accuracy: {mean_accuracy}%") """
     
     
-    # predict_next(df, horizon=90, smoothness=7)
+    predict_next(df, horizon=90, smoothness=7)
     # decompose(df, 'Mood')
-    train(df, horizon=90, smoothness=10)
+    # train(df, horizon=90, smoothness=10)
     # model, accuracy = predict(df, "Mood", horizon=90, plot=True)
     # importance(model, 'Mood')
