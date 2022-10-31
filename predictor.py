@@ -241,12 +241,57 @@ def predict_next(df, horizon=7, smoothness=10):
             helpers.logo(f'./visualisations/predictions/{name_reconstruct(dp)}.png')
         except Exception as e:
             continue
+
+
+def lineplot(data):
+    """_summary_: Produces a lineplot of given data.
+
+    Args:
+        data (_type_: list): _description_: A list of data to be plotted. List must contain tuple with color value.
+    """
+    # styling of plot
+    plt.figure(figsize=(16, 6), facecolor='#021631')
+    ax = plt.axes()
+
+    font_dir = ["./assets/"]
+    font_files = font_manager.findSystemFonts(fontpaths=font_dir)
+    for font_file in font_files:
+        font_manager.fontManager.addfont(font_file)
+
+    plt.title(f'{name_reconstruct(dp)} Prediction', fontsize=20, color='white')
+
+    plt.grid(color='#6E7A8B')
+
+    ax.set_facecolor('#021631')
+
+    ax.spines['bottom'].set_color('#6E7A8B')
+    ax.spines['top'].set_color('#6E7A8B')
+    ax.spines['left'].set_color('#6E7A8B')
+    ax.spines['right'].set_color('#6E7A8B')
+    # set axis tick color
+    ax.tick_params(axis='x', colors='#6E7A8B')
+    ax.tick_params(axis='y', colors='#6E7A8B')
+
+    #set text color
+    plt.rcParams['text.color'] = 'white'
+    plt.rcParams["font.family"] = "Product Sans"
+    # plot the data
+    plt.plot(data[0], color='#00E89D')  # 488BE3
+    plt.plot(future, color='#77B7EE')  # 0078FF
+    # connect the last point of past data to the first point of future data
+    plt.plot([len(data[0])-1, len(data[0])], [data[0].iloc[-1], future.iloc[0], color='#77B7EE')
+    plt.plot(data[0].index[-1], data[0].iloc[-1], 'o', color='#00E89D', markersize=8)
+
+    plt.savefig(f'./visualisations/predictions/{name_reconstruct(dp)}.png')
+    # close the plot
+    plt.close()
+    plt.clf()
         
         
 def name_reconstruct(name, equalize=False, bold=False):
     # add a space before every capital letter
     # metrics to ignore
-    metrics = ["dBASPL", "mmHg", "kmhr", "min", "ms", "count", "countmin", "kcal", "g", "kg", "l", "in"]
+    metrics = ["dBASPL", "mmHg", "kmhr", "min", "ms", "count", "countmin", "kcal", "g", "kg"]
     metrics.sort(key=len, reverse=True)
     
     for metric in metrics:

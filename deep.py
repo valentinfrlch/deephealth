@@ -16,6 +16,9 @@ def synthesize(df, value):
         v = mood(df)
     elif value == "audio":
         v = audio(df)
+    elif value == "bp":
+        v = (df["Blood Pressure [Systolic] (mmHg)"] +
+             df["Blood Pressure [Diastolic] (mmHg)"]) / 2
     else:
         v = None
     return v
@@ -89,6 +92,8 @@ def convert(csv):
     df.insert(i, "Sleep Delta (hr)", synthesize(df, "sleep_delta"))
     i = df.columns.get_loc("Headphone Audio Exposure (dBASPL)")
     df.insert(i, "Max Audio Exposure (dBASPL)", synthesize(df, "audio"))
+    i = df.columns.get_loc("Blood Pressure [Systolic] (mmHg)")
+    df.insert(i, "Mean Blood Pressure (mmHg)", synthesize(df, "bp"))
     mood(df)
     print("converted")
     return df
