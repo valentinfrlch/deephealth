@@ -181,36 +181,28 @@ def predict_next(df, horizon=7, smoothness=10):
                                   'Initializing Model...', progressbar.Percentage(), " ", progressbar.Bar('█', '|')], term_width=200)
     bar.start()
     for dp in df.columns:
-        #try:
-            bar.update(bar.currval + 1)
-            # change the title of the progress bar
-            bar.widgets[0] = f'Processing {name_reconstruct(dp, True, True)} '
-            X = df.drop(dp, axis=1)
-            # take last week of data to validate model
-            X_test = X.iloc[-horizon:, :]
+        bar.update(bar.currval + 1)
+        bar.widgets[0] = f'Processing {name_reconstruct(dp, True, True)} '
+        X = df.drop(dp, axis=1)
+        X_test = X.iloc[-horizon:, :]
 
-            model, accuracy = predict(df, dp)
-            Y = model.predict(X_test)
+        model, accuracy = predict(df, dp)
+        Y = model.predict(X_test)
 
-            past_data = df[dp]
+        past_data = df[dp]
 
-            Y = pd.DataFrame(Y, columns=[dp])
+        Y = pd.DataFrame(Y, columns=[dp])
 
-            merged = pd.merge(past_data, Y, how='outer')
-            # calculate rolling average
-            merged = merged.rolling(window=smoothness).mean()
-            past = merged[dp].iloc[:-horizon]
-            future = merged[dp].iloc[-horizon:]
+        # merge past data with predictions and use Date from df as index
+        merged = pd.concat([past_data, Y], axis=0)
+        
+        merged = merged.rolling(window=smoothness).mean()
+        
 
-            # plot the data
-            lineplot(f"Prediction of {name_reconstruct(dp)}", [
-                     [past, "#00E89D"], [future, "#77B7EE"]])
-        # except Exception as e:
-        #     print(e)
-        #     continue
+        lineplot(f"Prediction of {name_reconstruct(dp)}", dp, [[merged, "#00E89D"]])
 
 
-def lineplot(title, dptitle="", data=[]):
+def lineplot(title, dptitle, data, consecutive=True):
     """_summary_: Produces a lineplot of given data.
 
     Args:
@@ -224,8 +216,8 @@ def lineplot(title, dptitle="", data=[]):
     font_files = font_manager.findSystemFonts(fontpaths=font_dir)
     for font_file in font_files:
         font_manager.fontManager.addfont(font_file)
-
-    plt.title(title)
+    
+    plt.title(title, fontsize=20, color='white', fontname='Product Sans', y=1.038)
 
     plt.grid(color='#6E7A8B')
 
@@ -247,9 +239,13 @@ def lineplot(title, dptitle="", data=[]):
         # plot the data from data[0] with color data[1]
         plt.plot(dp[0], color=dp[1])
 
-    # add logo with helper function
-    plt.plot(data[0][0].index[-1], data[0][0].iloc[-1],
-             'o', color='#00E89D', markersize=8)
+    # add o marker to last data point of first data set
+    plt.plot(len(data[0][0]) - 1, data[0][0].iloc[-1], 'o', color=data[0][1])
+    
+    if consecutive:
+        # connect the datasets 
+        plt.plot([len(data[0][0]) - 1, len(data[0][0])], [data[0][0].iloc[-1], data[1][0].iloc[0]], color=data[1][1])
+        
 
     plt.savefig(f'./visualisations/predictions/{name_reconstruct(dptitle)}.png')
     # close the plot
