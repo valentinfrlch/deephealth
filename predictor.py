@@ -1,5 +1,3 @@
-from configparser import LegacyInterpolation
-from tkinter import font
 from deep import *
 import helpers as helpers
 from statsmodels.tsa.seasonal import seasonal_decompose
@@ -11,7 +9,7 @@ import progressbar
 
 from lightgbm import LGBMRegressor
 from sklearn.metrics import mean_absolute_error
-from scipy.interpolate import make_interp_spline
+from scipy.interpolate import interp1d
 
 
 def decompose(df, datapoint, period=24):
@@ -178,7 +176,7 @@ def preprocess(path):
 def predict_next(df, horizon=7, smoothness=10):
     # create a progress bar
     bar = progressbar.ProgressBar(maxval=len(df.columns), widgets=[
-                                  'Initializing Model...', progressbar.Percentage(), " ", progressbar.Bar('█', '|')], term_width=200)
+                                  'Initializing Model...', progressbar.Percentage(), " ", progressbar.Bar('█')], term_width=200)
     bar.start()
     for dp in df.columns:
         bar.update(bar.currval + 1)
@@ -195,15 +193,29 @@ def predict_next(df, horizon=7, smoothness=10):
 
         # merge past data with predictions and use Date from df as index
         merged = pd.concat([past_data, Y], axis=0)
+        # create new indexes for the future data start from the last date in the dataset
+        # get the last date in the dataset
+        last_date = past_data.index[-1]
+        # generate indexes for the future data starting on last_date with a frequency of 1 day
+        future_index = pd.date_range(last_date, periods=horizon, freq='1D')
         
         
         merged = merged.rolling(window=smoothness).mean()
         # split into past and future
         past, future = merged.iloc[:-horizon], merged.iloc[-horizon:]
+        future.index = future_index
+        
+        # get the last value of the past data
+        last_value = past.iloc[-1].values[0]
+        # get the last date of the past data
+        last_date = past.index[-1]
+        
+        # put the last value and date into a dataframe as first row use date as index
+        future = pd.concat([pd.DataFrame([[last_value, last_date]], columns=[dp, 'Date']).set_index('Date'), future])
         
         
 
-        lineplot(f"Prediction of {name_reconstruct(dp)}", dp, [[future, "#77B7EE"]])
+        lineplot(f"Prediction of {name_reconstruct(dp)}", dp, [[past, "#77B7EE"], [future, "#00E89D"]])
 
 
 def lineplot(title, dptitle, data, consecutive=True):
@@ -238,18 +250,36 @@ def lineplot(title, dptitle, data, consecutive=True):
     # set text color
     plt.rcParams['text.color'] = 'white'
     plt.rcParams["font.family"] = "Product Sans"
+    
+    # get x and y data from df in an np array
+    x, y = data[0][0].index, data[0][0].values
+    test = data[0][0]
+    
 
-    for dp in data:
-        # plot the data from data[0] with color data[1]
-        plt.plot(dp[0], color=dp[1])
+    f = interp1d(x, y, kind='cubic')
+    xnew = np.linspace(0, len(data[0][0]), num=300, endpoint=True)
+    plt.plot(xnew, f(xnew), color=data[0][1], linewidth=2)
 
+    # show only from start of data to end of data
+    # get first date in data
+    first_date = data[0][0].index[0]
+    # get last date in data from last list in data
+    last_date = data[-1][0].index[-1] + pd.Timedelta(days=30)
+    
+    # set x axis limits
+    plt.xlim(first_date, last_date)
+    
     # add o marker to last data point of first data set
     # plt.plot(len(data[0][0]) - 1, data[0][0].iloc[-1], 'o', color=data[0][1])
     
     if consecutive:
         if len(data) > 1:
-            # connect the datasets 
-            plt.plot([len(data[0][0]) - 1, len(data[0][0])], [data[0][0].iloc[-1], data[1][0].iloc[0]], color=data[1][1])
+            # get x and y values of last data point of first data set
+            x, y = data[0][0].index[len(data[0][0]) - 1], data[0][0].iloc[-1].values[0]
+            # add an o to x and y
+            plt.plot(x, y, marker='o', color=data[0][1])
+            
+            
         
 
     plt.savefig(f'./visualisations/predictions/{name_reconstruct(dptitle)}.png')
@@ -302,7 +332,7 @@ if __name__ == '__main__':
     mean_accuracy = np.mean([float(acc[1][:-1]) for acc in accuracies])
     print(f"Mean accuracy: {mean_accuracy}%") """
 
-    predict_next(df, horizon=90, smoothness=7)
+    predict_next(df, horizon=90, smoothness=10)
     # decompose(df, 'Mood')
     # train(df, horizon=90, smoothness=10)
     # model, accuracy = predict(df, "Mood", horizon=90, plot=True)
