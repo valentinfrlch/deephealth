@@ -196,10 +196,14 @@ def predict_next(df, horizon=7, smoothness=10):
         # merge past data with predictions and use Date from df as index
         merged = pd.concat([past_data, Y], axis=0)
         
+        
         merged = merged.rolling(window=smoothness).mean()
+        # split into past and future
+        past, future = merged.iloc[:-horizon], merged.iloc[-horizon:]
+        
         
 
-        lineplot(f"Prediction of {name_reconstruct(dp)}", dp, [[merged, "#00E89D"]])
+        lineplot(f"Prediction of {name_reconstruct(dp)}", dp, [[future, "#77B7EE"]])
 
 
 def lineplot(title, dptitle, data, consecutive=True):
@@ -240,11 +244,12 @@ def lineplot(title, dptitle, data, consecutive=True):
         plt.plot(dp[0], color=dp[1])
 
     # add o marker to last data point of first data set
-    plt.plot(len(data[0][0]) - 1, data[0][0].iloc[-1], 'o', color=data[0][1])
+    # plt.plot(len(data[0][0]) - 1, data[0][0].iloc[-1], 'o', color=data[0][1])
     
     if consecutive:
-        # connect the datasets 
-        plt.plot([len(data[0][0]) - 1, len(data[0][0])], [data[0][0].iloc[-1], data[1][0].iloc[0]], color=data[1][1])
+        if len(data) > 1:
+            # connect the datasets 
+            plt.plot([len(data[0][0]) - 1, len(data[0][0])], [data[0][0].iloc[-1], data[1][0].iloc[0]], color=data[1][1])
         
 
     plt.savefig(f'./visualisations/predictions/{name_reconstruct(dptitle)}.png')
