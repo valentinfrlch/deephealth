@@ -71,19 +71,53 @@ def audio(df):
     return max_audio_exposure
 
 
-def convert(csv):
-    # remove all empty columns from csv
-    df = pd.read_csv(csv)
+def convert(file, mode="csv"):
+    if mode == "csv":
+        # remove all empty columns from csv
+        df = pd.read_csv(file)
+    
+    else:
+        # create a dataframe from json file
+        with open(file) as f:
+            data = json.load(f)
+            # convert to dataframe
+            names = []
+            values = []
+            datetime = []
+            for i in data["data"]["metrics"]:
+                names.append(i["name"])
+
+            df = pd.DataFrame(columns=names)
+            # get values from data["data"]["metrics"]["data"]
+            for i in range(len(names)):
+                # print progress
+                print("converting " + names[i] + " to dataframe")
+                # get the values for each metric and add it to the dataframe
+                for j in range(len(data["data"]["metrics"][i]["data"])):
+                    # print progress in percentage
+                    try:
+                        print(str(round((j / len(data["data"]["metrics"][i]["data"])) * 100, 2)) + "%", end="\r")
+                        df.at[j, names[i]] = data["data"]["metrics"][i]["data"][j]["qty"]
+                        df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
+                    except KeyError:
+                        continue
+            
+            # insert weekdays into dataframe
+            weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+            # add weekdays as columns
+            for i in weekdays:
+                df[i] = ""
+    
     # convert date column to datetime
     df.Date = pd.to_datetime(df.Date)
-    
+        
     # create columns for every weekday and set to True if date is on that weekday
     weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     for day in weekdays:
         df[day] = df["Date"].dt.day_name() == day
         df[day] = df[day].astype(bool)
-    
-    
+        
+        
     df.dropna(axis=1, how='all', inplace=True)
     # interpolate missing values in dataframe
     df.interpolate(method='ffill', axis=0, inplace=True)
@@ -96,6 +130,7 @@ def convert(csv):
     df.insert(i, "Mean Blood Pressure (mmHg)", synthesize(df, "bp"))
     mood(df)
     print("converted")
+    
     return df
 
 
@@ -190,13 +225,13 @@ def line(df, data, average=True, window=7, normalize=False):
 
 if __name__ == '__main__':
     df = convert('dataset/export.csv')
-    correlation(df)
-    t = df.columns
+    # correlation(df)
+    # t = df.columns
     # to list
-    t = t.tolist()
-    query1 = df.columns[df.columns.str.contains('Heart Rate Var')][0]
-    query2 = df.columns[df.columns.str.contains('Mood')][0]
-    query3 = df.columns[df.columns.str.contains('Max')][0]
+    # t = t.tolist()
+    # query1 = df.columns[df.columns.str.contains('Heart Rate Var')][0]
+    # query2 = df.columns[df.columns.str.contains('Mood')][0]
+    # query3 = df.columns[df.columns.str.contains('Max')][0]
     # line(df, [query1, query2, query3], True, 50, True)
     # pair(df, [query1, query2])
     # network(df, "dynamic", 0.75)

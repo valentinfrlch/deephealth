@@ -166,7 +166,7 @@ def train(df, horizon=7, smoothness=10):
 
 
 def preprocess(path):
-    df = convert(path)
+    df = convert(path, "json")
     df = df.select_dtypes(exclude=['object'])
     df = df.rename(columns=lambda x: re.sub('[^A-Za-z0-9_]+', '', x))
     df = df.set_index('Date')
@@ -268,8 +268,9 @@ def lineplot(title, dptitle, data, consecutive=True):
             # get x and y values of last data point of first data set
             x, y = data[0][0].index[len(
                 data[0][0]) - 1], data[0][0].iloc[-1].values[0]
-            # add an o to x and y
-            plt.plot(x, y, marker='o', color=data[0][1])
+            # add an o to x and y with size 10
+            plt.plot(x, y, marker='o', color=data[0][1], markersize=8)
+            plt.plot(x, y, marker='o', color="white", markersize=4)
 
     plt.savefig(
         f'./visualisations/predictions/{name_reconstruct(dptitle)}.png')
@@ -307,7 +308,7 @@ def name_reconstruct(name, equalize=False, bold=False):
 
 if __name__ == '__main__':
     accuracies = []
-    df = preprocess("dataset/export.csv")
+    df = preprocess("dataset/export.json")
     """
     #next_week(df)
     for dp in df.columns:
