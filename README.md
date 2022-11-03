@@ -2,8 +2,9 @@
 
 deepHealth can predict important health data like HRV or Respiratory Rate. It uses a model based on 4 years of data and achieves an average accuracy of 83.75%
 
-## deepHealth predicting HRV
-<img width="999" alt="image" src="https://user-images.githubusercontent.com/85313672/197875138-2860aa79-ead1-4d02-a86e-4c51a3c82c7e.png">
+## deepHealth predicting Resting Heart Rate
+![Resting Heart Rate](https://user-images.githubusercontent.com/85313672/199790095-478c2c7c-528d-426f-a0c3-4d45705148a0.png)
+
 
 
 
