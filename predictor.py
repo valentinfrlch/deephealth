@@ -3,13 +3,14 @@ import helpers as helpers
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.graphics.tsaplots import plot_acf
 import numpy as np
+import matplotlib as mpl
 from matplotlib import font_manager
 import re
 import progressbar
 
 from lightgbm import LGBMRegressor
 from sklearn.metrics import mean_absolute_error
-from scipy.interpolate import interp1d
+from scipy import interpolate
 
 
 def decompose(df, datapoint, period=24):
@@ -176,7 +177,7 @@ def preprocess(path):
 def predict_next(df, horizon=7, smoothness=10):
     # create a progress bar
     bar = progressbar.ProgressBar(maxval=len(df.columns), widgets=[
-                                  'Initializing Model...', progressbar.Percentage(), " ", progressbar.Bar('█')], term_width=200)
+                                  'Initializing Model...', progressbar.Percentage(), " ", progressbar.Bar('█')], term_width=150)
     bar.start()
     for dp in df.columns:
         bar.update(bar.currval + 1)
@@ -198,24 +199,23 @@ def predict_next(df, horizon=7, smoothness=10):
         last_date = past_data.index[-1]
         # generate indexes for the future data starting on last_date with a frequency of 1 day
         future_index = pd.date_range(last_date, periods=horizon, freq='1D')
-        
-        
+
         merged = merged.rolling(window=smoothness).mean()
         # split into past and future
         past, future = merged.iloc[:-horizon], merged.iloc[-horizon:]
         future.index = future_index
-        
+
         # get the last value of the past data
         last_value = past.iloc[-1].values[0]
         # get the last date of the past data
         last_date = past.index[-1]
-        
-        # put the last value and date into a dataframe as first row use date as index
-        future = pd.concat([pd.DataFrame([[last_value, last_date]], columns=[dp, 'Date']).set_index('Date'), future])
-        
-        
 
-        lineplot(f"Prediction of {name_reconstruct(dp)}", dp, [[past, "#77B7EE"], [future, "#00E89D"]])
+        # put the last value and date into a dataframe as first row use date as index
+        future = pd.concat([pd.DataFrame([[last_value, last_date]], columns=[
+                           dp, 'Date']).set_index('Date'), future])
+
+        lineplot(f"Prediction of {name_reconstruct(dp)}", dp, [
+                 [past, "#77B7EE"], [future, "#00E89D"]])
 
 
 def lineplot(title, dptitle, data, consecutive=True):
@@ -232,8 +232,9 @@ def lineplot(title, dptitle, data, consecutive=True):
     font_files = font_manager.findSystemFonts(fontpaths=font_dir)
     for font_file in font_files:
         font_manager.fontManager.addfont(font_file)
-    
-    plt.title(title, fontsize=20, color='white', fontname='Product Sans', y=1.038)
+
+    plt.title(title, fontsize=20, color='white',
+              fontname='Product Sans', y=1.038)
 
     plt.grid(color='#6E7A8B')
 
@@ -250,43 +251,49 @@ def lineplot(title, dptitle, data, consecutive=True):
     # set text color
     plt.rcParams['text.color'] = 'white'
     plt.rcParams["font.family"] = "Product Sans"
-    
+
     # get x and y data from df in an np array
-    x, y = data[0][0].index, data[0][0].values
-    test = data[0][0]
-    
+    x = data[0][0].index
 
-    f = interp1d(x, y, kind='cubic')
-    xnew = np.linspace(0, len(data[0][0]), num=300, endpoint=True)
-    plt.plot(xnew, f(xnew), color=data[0][1], linewidth=2)
+    # convert datetime to float with matplotlib.dates.date2num
+    x = mpl.dates.date2num(x)
 
-    # show only from start of data to end of data
-    # get first date in data
+    y = data[0][0][0].values
+    # replace nan with 0
+    # y = pd.Series(y).fillna(0).values
+
+    # interpolate x and y with scipy.interpolate.interp2d
+    x = np.linspace(x.min(), x.max(), len(x))
+    y = interpolate.interp1d(x, y, kind='cubic')(x)
+
+    # plot data
+    plt.plot(x, y, color=data[0][1], linewidth=2)
+
     first_date = data[0][0].index[0]
     # get last date in data from last list in data
     last_date = data[-1][0].index[-1] + pd.Timedelta(days=30)
-    
+
     # set x axis limits
     plt.xlim(first_date, last_date)
-    
+
     # add o marker to last data point of first data set
     # plt.plot(len(data[0][0]) - 1, data[0][0].iloc[-1], 'o', color=data[0][1])
-    
+
     if consecutive:
         if len(data) > 1:
             # get x and y values of last data point of first data set
-            x, y = data[0][0].index[len(data[0][0]) - 1], data[0][0].iloc[-1].values[0]
+            x, y = data[0][0].index[len(
+                data[0][0]) - 1], data[0][0].iloc[-1].values[0]
             # add an o to x and y
             plt.plot(x, y, marker='o', color=data[0][1])
-            
-            
-        
 
-    plt.savefig(f'./visualisations/predictions/{name_reconstruct(dptitle)}.png')
+    plt.savefig(
+        f'./visualisations/predictions/{name_reconstruct(dptitle)}.png')
     # close the plot
     plt.close()
     plt.clf()
-    helpers.logo(f'./visualisations/predictions/{name_reconstruct(dptitle)}.png')
+    helpers.logo(
+        f'./visualisations/predictions/{name_reconstruct(dptitle)}.png')
 
 
 def name_reconstruct(name, equalize=False, bold=False):
