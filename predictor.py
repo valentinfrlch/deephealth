@@ -3,14 +3,13 @@ import helpers as helpers
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.graphics.tsaplots import plot_acf
 import numpy as np
-import matplotlib as mpl
 from matplotlib import font_manager
 import re
 import progressbar
 
 from lightgbm import LGBMRegressor
-from sklearn.metrics import mean_absolute_error
-from scipy import interpolate
+import datetime
+from scipy.interpolate import make_interp_spline
 
 
 def decompose(df, datapoint, period=24):
@@ -167,7 +166,7 @@ def train(df, horizon=7, smoothness=10):
 
 
 def preprocess(path):
-    df = convert(path)
+    df = convert(path, "json")
     df = df.select_dtypes(exclude=['object'])
     df = df.rename(columns=lambda x: re.sub('[^A-Za-z0-9_]+', '', x))
     df = df.set_index('Date')
@@ -213,6 +212,12 @@ def predict_next(df, horizon=7, smoothness=10):
         # put the last value and date into a dataframe as first row use date as index
         future = pd.concat([pd.DataFrame([[last_value, last_date]], columns=[
                            dp, 'Date']).set_index('Date'), future])
+        
+        future = future.drop(future.columns[1], axis=1)
+        
+        # convert index to datetime
+        future.index = pd.to_datetime(future.index)
+        past.index = pd.to_datetime(past.index)
 
         lineplot(f"Prediction of {name_reconstruct(dp)}", dp, [
                  [past, "#77B7EE"], [future, "#00E89D"]])
@@ -251,41 +256,21 @@ def lineplot(title, dptitle, data, consecutive=True):
     # set text color
     plt.rcParams['text.color'] = 'white'
     plt.rcParams["font.family"] = "Product Sans"
+    
+    # interpolate the dataframe and pplot it
+    for d in data:
+        d[0] = d[0].interpolate(method='cubic')
+        plt.plot(d[0], color=d[1])
 
-    # get x and y data from df in an np array
-    x = data[0][0].index
-
-    # convert datetime to float with matplotlib.dates.date2num
-    x = mpl.dates.date2num(x)
-
-    y = data[0][0][0].values
-    # replace nan with 0
-    # y = pd.Series(y).fillna(0).values
-
-    # interpolate x and y with scipy.interpolate.interp2d
-    x = np.linspace(x.min(), x.max(), len(x))
-    y = interpolate.interp1d(x, y, kind='cubic')(x)
-
-    # plot data
-    plt.plot(x, y, color=data[0][1], linewidth=2)
-
-    first_date = data[0][0].index[0]
-    # get last date in data from last list in data
-    last_date = data[-1][0].index[-1] + pd.Timedelta(days=30)
-
-    # set x axis limits
-    plt.xlim(first_date, last_date)
-
-    # add o marker to last data point of first data set
-    # plt.plot(len(data[0][0]) - 1, data[0][0].iloc[-1], 'o', color=data[0][1])
 
     if consecutive:
         if len(data) > 1:
             # get x and y values of last data point of first data set
             x, y = data[0][0].index[len(
                 data[0][0]) - 1], data[0][0].iloc[-1].values[0]
-            # add an o to x and y
-            plt.plot(x, y, marker='o', color=data[0][1])
+            # add an o to x and y with size 10
+            plt.plot(x, y, marker='o', color=data[0][1], markersize=8)
+            plt.plot(x, y, marker='o', color="white", markersize=4)
 
     plt.savefig(
         f'./visualisations/predictions/{name_reconstruct(dptitle)}.png')
@@ -323,7 +308,7 @@ def name_reconstruct(name, equalize=False, bold=False):
 
 if __name__ == '__main__':
     accuracies = []
-    df = preprocess("dataset/export.csv")
+    df = preprocess("dataset/export.json")
     """
     #next_week(df)
     for dp in df.columns:
@@ -339,7 +324,7 @@ if __name__ == '__main__':
     mean_accuracy = np.mean([float(acc[1][:-1]) for acc in accuracies])
     print(f"Mean accuracy: {mean_accuracy}%") """
 
-    predict_next(df, horizon=90, smoothness=10)
+    predict_next(df, horizon=90, smoothness=7)
     # decompose(df, 'Mood')
     # train(df, horizon=90, smoothness=10)
     # model, accuracy = predict(df, "Mood", horizon=90, plot=True)
