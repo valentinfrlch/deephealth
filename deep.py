@@ -63,11 +63,12 @@ def mood(df):
                 else:
                     df.at[i, v] = False
                 df[v] = df[v].astype(bool)
-                    
-                    
+
+
 def audio(df):
     # add the higher value of headphone and environmental audio exposure
-    max_audio_exposure = df[["Headphone Audio Exposure (dBASPL)", "Environmental Audio Exposure (dBASPL)"]].max(axis=1)
+    max_audio_exposure = df[[
+        "Headphone Audio Exposure (dBASPL)", "Environmental Audio Exposure (dBASPL)"]].max(axis=1)
     return max_audio_exposure
 
 
@@ -75,7 +76,13 @@ def convert(file, mode="csv"):
     if mode == "csv":
         # remove all empty columns from csv
         df = pd.read_csv(file)
-    
+
+        # insert weekdays into dataframe
+        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        # add weekdays as columns
+        for i in weekdays:
+            df[i] = ""
+
     else:
         # create a dataframe from json file
         with open(file) as f:
@@ -96,28 +103,24 @@ def convert(file, mode="csv"):
                 for j in range(len(data["data"]["metrics"][i]["data"])):
                     # print progress in percentage
                     try:
-                        print(str(round((j / len(data["data"]["metrics"][i]["data"])) * 100, 2)) + "%", end="\r")
-                        df.at[j, names[i]] = data["data"]["metrics"][i]["data"][j]["qty"]
+                        print(str(
+                            round((j / len(data["data"]["metrics"][i]["data"])) * 100, 2)) + "%", end="\r")
+                        df.at[j, names[i]
+                              ] = data["data"]["metrics"][i]["data"][j]["qty"]
                         df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                     except KeyError:
                         continue
-            
-            # insert weekdays into dataframe
-            weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-            # add weekdays as columns
-            for i in weekdays:
-                df[i] = ""
-    
+
     # convert date column to datetime
     df.Date = pd.to_datetime(df.Date)
-        
+
     # create columns for every weekday and set to True if date is on that weekday
-    weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    weekdays = ["Monday", "Tuesday", "Wednesday",
+                "Thursday", "Friday", "Saturday", "Sunday"]
     for day in weekdays:
         df[day] = df["Date"].dt.day_name() == day
         df[day] = df[day].astype(bool)
-        
-        
+
     df.dropna(axis=1, how='all', inplace=True)
     # interpolate missing values in dataframe
     df.interpolate(method='ffill', axis=0, inplace=True)
@@ -130,7 +133,7 @@ def convert(file, mode="csv"):
     df.insert(i, "Mean Blood Pressure (mmHg)", synthesize(df, "bp"))
     mood(df)
     print("converted")
-    
+
     return df
 
 
@@ -170,7 +173,8 @@ def network(df, style, threshold=0.5):
         # save the figure to file
         plt.savefig('visualisations/static_network.png')
     elif style == "dynamic":
-        net = Network(height='1300px', width='100%', directed=False, notebook=False, neighborhood_highlight=False, select_menu=False, filter_menu=False, bgcolor='#222222', font_color="white", layout=None, heading='', cdn_resources='local')
+        net = Network(height='1300px', width='100%', directed=False, notebook=False, neighborhood_highlight=False, select_menu=False,
+                      filter_menu=False, bgcolor='#222222', font_color="white", layout=None, heading='', cdn_resources='local')
         net.set_options(open("options/default.txt").read())
         # net.show_buttons(filter_=['edges', 'nodes'])
 
