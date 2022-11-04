@@ -77,12 +77,6 @@ def convert(file, mode="csv"):
         # remove all empty columns from csv
         df = pd.read_csv(file)
 
-        # insert weekdays into dataframe
-        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-        # add weekdays as columns
-        for i in weekdays:
-            df[i] = ""
-
     else:
         # create a dataframe from json file
         with open(file) as f:
@@ -97,40 +91,47 @@ def convert(file, mode="csv"):
             df = pd.DataFrame(columns=names)
             # get values from data["data"]["metrics"]["data"]
             for i in range(len(names)):
-                # print progress
-                print("converting " + names[i] + " to dataframe")
+                # print progress in percentage and clear line so it doesn't print multiple times
+                print("\r" + str(round(i / len(names) * 100)) + "%", end="")
                 # get the values for each metric and add it to the dataframe
                 for j in range(len(data["data"]["metrics"][i]["data"])):
                     # print progress in percentage
                     try:
-                        print(str(
-                            round((j / len(data["data"]["metrics"][i]["data"])) * 100, 2)) + "%", end="\r")
                         df.at[j, names[i]
                               ] = data["data"]["metrics"][i]["data"][j]["qty"]
                         df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                     except KeyError:
                         continue
+            names.append("Date")
+        # make Date the index
+        # convert object to float
+        for i in df.columns:
+            try:
+                if i != "Date":
+                    df[i] = df[i].astype(float)
+            except ValueError:
+                continue
 
-    # convert date column to datetime
-    df.Date = pd.to_datetime(df.Date)
-
-    # create columns for every weekday and set to True if date is on that weekday
-    weekdays = ["Monday", "Tuesday", "Wednesday",
-                "Thursday", "Friday", "Saturday", "Sunday"]
-    for day in weekdays:
-        df[day] = df["Date"].dt.day_name() == day
-        df[day] = df[day].astype(bool)
+    #convert to datetime 
+    df.set_index("Date", inplace=True)
+    # convert to datetime
+    df.index = pd.to_datetime(df.index)
+    
+    # print index dtype
+    print(df.index.dtype)
 
     df.dropna(axis=1, how='all', inplace=True)
     # interpolate missing values in dataframe
-    df.interpolate(method='ffill', axis=0, inplace=True)
+    df.interpolate(method='linear', axis=0, inplace=True)
     # get index of column "Sleep Analysis [Asleep] (hr)"
+    """ 
     i = df.columns.get_loc("Sleep Analysis [Asleep] (hr)")
     df.insert(i, "Sleep Delta (hr)", synthesize(df, "sleep_delta"))
     i = df.columns.get_loc("Headphone Audio Exposure (dBASPL)")
     df.insert(i, "Max Audio Exposure (dBASPL)", synthesize(df, "audio"))
     i = df.columns.get_loc("Blood Pressure [Systolic] (mmHg)")
     df.insert(i, "Mean Blood Pressure (mmHg)", synthesize(df, "bp"))
+    """
     mood(df)
     print("converted")
 
