@@ -4,7 +4,6 @@ deepHealth can predict important health data like HRV or Respiratory Rate. It us
 
 ## deepHealth predicting Resting Heart Rate
 ![Resting Heart Rate](https://user-images.githubusercontent.com/85313672/199790095-478c2c7c-528d-426f-a0c3-4d45705148a0.png)
-![Resting heart rate](https://user-images.githubusercontent.com/85313672/200131740-183d98af-7a25-4b8b-bcea-8fe6e595cf9f.png)
 
 
 
