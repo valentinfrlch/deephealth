@@ -133,7 +133,7 @@ def convert(file, mode="csv"):
     i = df.columns.get_loc("Blood Pressure [Systolic] (mmHg)")
     df.insert(i, "Mean Blood Pressure (mmHg)", synthesize(df, "bp"))
     """
-    mood(df)
+    # mood(df)
     print("converted")
 
     return df
