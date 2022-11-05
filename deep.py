@@ -121,9 +121,10 @@ def convert(file, mode="csv"):
     df.index = pd.to_datetime(df.index, utc=True)
     
 
+    df.sort_index(inplace=True)
     df.dropna(axis=1, how='all', inplace=True)
     # interpolate missing values in dataframe
-    df.interpolate(method='ffill', axis=0, inplace=True)
+    df.interpolate(method='bfill', axis=0, inplace=True)
     # get index of column "Sleep Analysis [Asleep] (hr)"
     """ 
     i = df.columns.get_loc("Sleep Analysis [Asleep] (hr)")

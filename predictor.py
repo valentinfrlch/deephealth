@@ -195,8 +195,8 @@ def predict_next(df, horizon=7, smoothness=10):
         # create new indexes for the future data start from the last date in the dataset
         # get the last date in the dataset
         last_date = past_data.index[-1]
-        # generate indexes for the future data starting on last_date with a frequency of 1 hour
-        future_index = pd.date_range(last_date, periods=horizon, freq='1H')
+        # generate indexes for the future data starting on last_date with a frequency of 1 day
+        future_index = pd.date_range(last_date, periods=horizon, freq='1D')
 
         merged = merged.rolling(window=smoothness).mean()
         # split into past and future
@@ -258,10 +258,13 @@ def lineplot(title, dptitle, data, consecutive=True):
     
     # interpolate the dataframe and pplot it
     for d in data:
-        d[0] = d[0][~d[0].index.duplicated(keep='first')]
-        d[0] = d[0].sort_index()
-        d[0] = d[0].interpolate(method='cubic')
-        plt.plot(d[0], color=d[1])
+        try:
+            d[0] = d[0][~d[0].index.duplicated(keep='first')]
+            d[0] = d[0].sort_index()
+            d[0] = d[0].interpolate(method='cubic')
+            plt.plot(d[0], color=d[1])
+        except ValueError as e:
+            continue
 
 
     if consecutive:
@@ -326,7 +329,7 @@ if __name__ == '__main__':
     mean_accuracy = np.mean([float(acc[1][:-1]) for acc in accuracies])
     print(f"Mean accuracy: {mean_accuracy}%") """
 
-    predict_next(df, horizon=168*30, smoothness=168)
+    predict_next(df, horizon=90, smoothness=14)
     # decompose(df, 'Mood')
     # train(df, horizon=90, smoothness=10)
     # model, accuracy = predict(df, "Mood", horizon=90, plot=True)
