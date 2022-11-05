@@ -109,20 +109,21 @@ def convert(file, mode="csv"):
             try:
                 if i != "Date":
                     df[i] = df[i].astype(float)
-            except ValueError:
+                else:
+                    # convert date to datetime
+                    df[i] = pd.to_datetime(df[i])
+            except ValueError as e:
+                print(e)
                 continue
 
     #convert to datetime 
     df.set_index("Date", inplace=True)
-    # convert to datetime
-    df.index = pd.to_datetime(df.index)
+    df.index = pd.to_datetime(df.index, utc=True)
     
-    # print index dtype
-    print(df.index.dtype)
 
     df.dropna(axis=1, how='all', inplace=True)
     # interpolate missing values in dataframe
-    df.interpolate(method='linear', axis=0, inplace=True)
+    df.interpolate(method='ffill', axis=0, inplace=True)
     # get index of column "Sleep Analysis [Asleep] (hr)"
     """ 
     i = df.columns.get_loc("Sleep Analysis [Asleep] (hr)")
