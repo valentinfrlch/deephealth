@@ -6,6 +6,7 @@ import numpy as np
 from matplotlib import font_manager
 import re
 import progressbar
+from matplotlib import dates as mdates
 
 from lightgbm import LGBMRegressor
 import datetime
@@ -72,6 +73,7 @@ def predict(df, datapoint, horizon=7, plot=False, smoothness=10):
 
     # rolling average of predictions and y_test
     y_test = y_test.rolling(smoothness).mean()
+    
     # predictions to dataframe
     predictions = pd.DataFrame(
         predictions, index=y_test.index, columns=[datapoint])
@@ -198,7 +200,8 @@ def predict_next(df, horizon=7, smoothness=10):
         # generate indexes for the future data starting on last_date with a frequency of 1 day
         future_index = pd.date_range(last_date, periods=horizon, freq='1D')
 
-        merged = merged.rolling(window=smoothness).mean()
+        merged = merged.rolling(window=smoothness, min_periods=1).mean()
+        
         # split into past and future
         past, future = merged.iloc[:-horizon], merged.iloc[-horizon:]
         future.index = future_index
@@ -207,6 +210,7 @@ def predict_next(df, horizon=7, smoothness=10):
         last_value = past.iloc[-1].values[0]
         # get the last date of the past data
         last_date = past.index[-1]
+        
 
         # put the last value and date into a dataframe as first row use date as index
         future = pd.concat([pd.DataFrame([[last_value, last_date]], columns=[
@@ -241,6 +245,10 @@ def lineplot(title, dptitle, data, consecutive=True):
               fontname='Product Sans', y=1.038)
 
     plt.grid(color='#6E7A8B')
+    
+    # display monthly ticks
+    ax.xaxis.set_major_locator(mdates.MonthLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b'))
 
     ax.set_facecolor('#021631')
 
@@ -270,8 +278,7 @@ def lineplot(title, dptitle, data, consecutive=True):
     if consecutive:
         if len(data) > 1:
             # get x and y values of last data point of first data set
-            x, y = data[0][0].index[len(
-                data[0][0]) - 1], data[0][0].iloc[-1].values[0]
+            x, y = data[0][0].index[len(data[0][0]) - 1], data[0][0].iloc[-1].values[0]
             # add an o to x and y with size 10
             plt.plot(x, y, marker='o', color=data[0][1], markersize=8)
             plt.plot(x, y, marker='o', color="white", markersize=4)
@@ -329,7 +336,7 @@ if __name__ == '__main__':
     mean_accuracy = np.mean([float(acc[1][:-1]) for acc in accuracies])
     print(f"Mean accuracy: {mean_accuracy}%") """
 
-    predict_next(df, horizon=90, smoothness=14)
+    predict_next(df, horizon=90, smoothness=7)
     # decompose(df, 'Mood')
     # train(df, horizon=90, smoothness=10)
     # model, accuracy = predict(df, "Mood", horizon=90, plot=True)
