@@ -233,7 +233,7 @@ def lineplot(title, dptitle, data, consecutive=True):
         data (_type_: list): _description_: A list of data to be plotted. List must contain tuple with color value.
     """
     # styling of plot
-    plt.figure(figsize=(32, 12)), facecolor='#021631')
+    plt.figure(figsize=(32, 12), facecolor='#021631')
     ax = plt.axes()
 
     font_dir = ["./assets/"]
