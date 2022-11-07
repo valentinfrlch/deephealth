@@ -269,9 +269,10 @@ def lineplot(title, dptitle, data, consecutive=True):
         try:
             d[0] = d[0][~d[0].index.duplicated(keep='first')]
             d[0] = d[0].sort_index()
-            d[0] = d[0].interpolate(method='polynomial', order=5)
-            plt.plot(d[0], color=d[1])
+            interpolated = d[0].interpolate(method='time')
+            plt.plot(interpolated, color=d[1])
         except ValueError as e:
+            print(e)
             continue
 
 
