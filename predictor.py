@@ -88,7 +88,7 @@ def predict(df, datapoint, horizon=7, plot=False, smoothness=10):
         for font_file in font_files:
             font_manager.fontManager.addfont(font_file)
 
-        plt.figure(figsize=(16, 6), facecolor='#021631')
+        plt.figure(figsize=(32, 12), facecolor='#021631')
         ax = plt.axes()
 
         plt.grid(color='#6E7A8B')
@@ -233,7 +233,7 @@ def lineplot(title, dptitle, data, consecutive=True):
         data (_type_: list): _description_: A list of data to be plotted. List must contain tuple with color value.
     """
     # styling of plot
-    plt.figure(figsize=(16, 6), facecolor='#021631')
+    plt.figure(figsize=(32, 12)), facecolor='#021631')
     ax = plt.axes()
 
     font_dir = ["./assets/"]
@@ -279,11 +279,12 @@ def lineplot(title, dptitle, data, consecutive=True):
 
     if consecutive:
         if len(data) > 1:
-            # get x and y values of last data point of first data set
-            x, y = data[0][0].index[len(data[0][0]) - 1], data[0][0].iloc[-1].values[0]
-            # add an o to x and y with size 10
-            plt.plot(x, y, marker='o', color=data[0][1], markersize=8)
-            plt.plot(x, y, marker='o', color="white", markersize=4)
+            x1, y1 = data[0][0].index[len(
+                data[0][0]) - 1], data[0][0].iloc[-1].values[0]
+            x2, y2 = data[1][0].index[0], data[1][0].iloc[0].values[0]
+            plt.plot([x1, x2], [y1, y2], color=d[1][1], linestyle='--')
+            plt.plot(x1, y1, marker='o', color=data[0][1], markersize=8)
+            plt.plot(x1, y1, marker='o', color="white", markersize=4)
 
     plt.savefig(
         f'./visualisations/predictions/{name_reconstruct(dptitle)}.png')
