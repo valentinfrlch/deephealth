@@ -10,7 +10,6 @@ from matplotlib import dates as mdates
 
 from lightgbm import LGBMRegressor
 import datetime
-from scipy.interpolate import make_interp_spline
 
 
 def decompose(df, datapoint, period=24):
@@ -269,8 +268,9 @@ def lineplot(title, dptitle, data, consecutive=True):
         try:
             d[0] = d[0][~d[0].index.duplicated(keep='first')]
             d[0] = d[0].sort_index()
+            
             d[0] = d[0].reindex(pd.date_range(d[0].index[0], d[0].index[-1], freq='1H'))
-            d[0] = d[0].interpolate(method='cubic')
+            d[0] = d[0].interpolate(method='polynomial', order=5)
             plt.plot(d[0], color=d[1])
         except ValueError as e:
             print(e)
@@ -282,7 +282,7 @@ def lineplot(title, dptitle, data, consecutive=True):
             x1, y1 = data[0][0].index[len(
                 data[0][0]) - 1], data[0][0].iloc[-1].values[0]
             x2, y2 = data[1][0].index[0], data[1][0].iloc[0].values[0]
-            plt.plot([x1, x2], [y1, y2], color=d[1][1], linestyle='--')
+            plt.plot([x1, x2], [y1, y2], color=d[1][1], linestyle=':', linewidth=2)
             plt.plot(x1, y1, marker='o', color=data[0][1], markersize=8)
             plt.plot(x1, y1, marker='o', color="white", markersize=4)
 
@@ -339,7 +339,7 @@ if __name__ == '__main__':
     mean_accuracy = np.mean([float(acc[1][:-1]) for acc in accuracies])
     print(f"Mean accuracy: {mean_accuracy}%") """
 
-    predict_next(df, horizon=30, smoothness=7)
+    predict_next(df, horizon=90, smoothness=7)
     # decompose(df, 'Mood')
     # train(df, horizon=90, smoothness=10)
     # model, accuracy = predict(df, "Mood", horizon=90, plot=True)

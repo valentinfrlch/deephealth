@@ -124,8 +124,6 @@ def convert(file, mode="csv"):
     df.sort_index(inplace=True)
     df.dropna(axis=1, how='all', inplace=True)
     # interpolate missing values in dataframe
-    df.interpolate(method='bfill', axis=0, inplace=True)
-    # get index of column "Sleep Analysis [Asleep] (hr)"
     """ 
     i = df.columns.get_loc("Sleep Analysis [Asleep] (hr)")
     df.insert(i, "Sleep Delta (hr)", synthesize(df, "sleep_delta"))
@@ -135,7 +133,6 @@ def convert(file, mode="csv"):
     df.insert(i, "Mean Blood Pressure (mmHg)", synthesize(df, "bp"))
     """
     # mood(df)
-    print("converted")
 
     return df
 
