@@ -263,17 +263,16 @@ def lineplot(title, dptitle, data, consecutive=True):
     plt.rcParams['text.color'] = 'white'
     plt.rcParams["font.family"] = "Product Sans"
     
-    # interpolate the dataframe and pplot it
+    # interpolate the dataframe and plot it
     for d in data:
         try:
             d[0] = d[0][~d[0].index.duplicated(keep='first')]
             d[0] = d[0].sort_index()
-            
-            d[0] = d[0].reindex(pd.date_range(d[0].index[0], d[0].index[-1], freq='1H'))
-            d[0] = d[0].interpolate(method='polynomial', order=5)
+            d[0] = d[0].iloc[10:, :]
+            # d[0] = d[0].reindex(pd.date_range(d[0].index[0], d[0].index[-1], freq='1H'))
+            # d[0] = d[0].interpolate(method='polynomial', order=5)
             plt.plot(d[0], color=d[1])
         except ValueError as e:
-            print(e)
             continue
 
 
@@ -282,7 +281,7 @@ def lineplot(title, dptitle, data, consecutive=True):
             x1, y1 = data[0][0].index[len(
                 data[0][0]) - 1], data[0][0].iloc[-1].values[0]
             x2, y2 = data[1][0].index[0], data[1][0].iloc[0].values[0]
-            plt.plot([x1, x2], [y1, y2], color=d[1][1], linestyle=':', linewidth=2)
+            plt.plot([x1, x2], [y1, y2], color=data[1][1], linestyle=':', linewidth=2)
             plt.plot(x1, y1, marker='o', color=data[0][1], markersize=8)
             plt.plot(x1, y1, marker='o', color="white", markersize=4)
 
