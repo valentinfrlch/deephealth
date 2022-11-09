@@ -271,6 +271,8 @@ def lineplot(title, dptitle, data, consecutive=True):
             d[0] = d[0].iloc[10:, :]
             d[0] = d[0].reindex(pd.date_range(d[0].index[0], d[0].index[-1], freq='1H'))
             d[0] = d[0].interpolate(method='polynomial', order=5)
+            # fix data going missing because of interpolation
+            d[0] = d[0].fillna(method='ffill')
             plt.plot(d[0], color=d[1])
         except ValueError as e:
             continue
