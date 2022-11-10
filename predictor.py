@@ -174,7 +174,6 @@ def preprocess(path):
 
 
 def predict_next(df, horizon=7, smoothness=10):
-    # create a progress bar
     bar = progressbar.ProgressBar(maxval=len(df.columns), widgets=[
                                   'Initializing Model...', progressbar.Percentage(), " ", progressbar.Bar('█')], term_width=150)
     bar.start()
@@ -191,17 +190,12 @@ def predict_next(df, horizon=7, smoothness=10):
 
         Y = pd.DataFrame(Y, columns=[dp])
 
-        # merge past data with predictions and use Date from df as index
         merged = pd.concat([past_data, Y], axis=0)
-        # create new indexes for the future data start from the last date in the dataset
-        # get the last date in the dataset
         last_date = past_data.index[-1]
-        # generate indexes for the future data starting on last_date with a frequency of 1 day
         future_index = pd.date_range(last_date, periods=horizon, freq='1D')
 
         merged = merged.rolling(window=smoothness, min_periods=1).mean()
-        
-        # split into past and future
+
         past, future = merged.iloc[:-horizon], merged.iloc[-horizon:]
         future.index = future_index
 

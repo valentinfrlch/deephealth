@@ -102,9 +102,20 @@ def convert(file, mode="csv"):
                         df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                     except KeyError:
                         continue
+                # add blood pressure which is in a different format
+                if names[i] == "blood_pressure":
+                    for j in range(len(data["data"]["metrics"][i]["data"])):
+                        try:
+                            df.at[j,
+                                  "Blood Pressure [Systolic] (mmHg)"] = data["data"]["metrics"][i]["data"][j]["systolic"]
+                            df.at[j,
+                                  "Blood Pressure [Diastolic] (mmHg)"] = data["data"]["metrics"][i]["data"][j]["diastolic"]
+                            df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
+                        except KeyError:
+                            continue
+
             names.append("Date")
-        # make Date the index
-        # convert object to float
+
         for i in df.columns:
             try:
                 if i != "Date":
@@ -129,6 +140,10 @@ def convert(file, mode="csv"):
 
     # add the higher value of headphone and environmental audio exposure and call the new column audio
     df["Max Audio Exposure"] = df[[headphone, environmental]].max(axis=1)
+    # add average of systolic and diastolic blood pressure
+    systolic = [col for col in df.columns if "Systolic" in col][0]
+    diastolic = [col for col in df.columns if "Diastolic" in col][0]
+    df["Average Blood Pressure"] = (df[systolic] + df[diastolic]) / 2
     
     """
     df.insert(i, "Sleep Delta (hr)", synthesize(df, "sleep_delta"))
