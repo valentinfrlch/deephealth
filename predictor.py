@@ -245,10 +245,10 @@ def lineplot(title, dptitle, data, consecutive=True):
 
     plt.grid(color='#6E7A8B')
     
-    # display monthly ticks
+    # display monthly ticks with short year format
     ax.xaxis.set_major_locator(mdates.MonthLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b'))
-
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %y'))
+    
     ax.set_facecolor('#021631')
 
     ax.spines['bottom'].set_color('#6E7A8B')
