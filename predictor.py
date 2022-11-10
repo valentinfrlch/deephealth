@@ -264,19 +264,23 @@ def lineplot(title, dptitle, data, consecutive=True):
     plt.rcParams["font.family"] = "Product Sans"
     
     # interpolate the dataframe and plot it
+    i = 0
+
     for d in data:
+        i += 1
         try:
             d[0] = d[0][~d[0].index.duplicated(keep='first')]
             d[0] = d[0].sort_index()
-            d[0] = d[0].iloc[10:, :]
-            d[0] = d[0].reindex(pd.date_range(d[0].index[0], d[0].index[-1], freq='1H'))
+            # only run when this is the first iteration
+            if i == 1:
+                d[0] = d[0].iloc[10:, :]
+
+            d[0] = d[0].reindex(pd.date_range(
+                d[0].index[0], d[0].index[-1], freq='1H'))
             d[0] = d[0].interpolate(method='polynomial', order=5)
             plt.plot(d[0], color=d[1])
         except ValueError as e:
             continue
-    
-    # there is a gap between past and future data because of the interpolation, so we need to fill it
-    data[1][0] = data[1][0].fillna(method='ffill')
 
 
     if consecutive:
