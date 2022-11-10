@@ -123,16 +123,21 @@ def convert(file, mode="csv"):
 
     df.sort_index(inplace=True)
     df.dropna(axis=1, how='all', inplace=True)
-    # interpolate missing values in dataframe
-    """ 
-    i = df.columns.get_loc("Sleep Analysis [Asleep] (hr)")
+
+    headphone = [col for col in df.columns if "headphone" in col][0]
+    environmental = [col for col in df.columns if "environmental" in col][0]
+
+    # add the higher value of headphone and environmental audio exposure and call the new column audio
+    df["Max Audio Exposure"] = df[[headphone, environmental]].max(axis=1)
+    
+    """
     df.insert(i, "Sleep Delta (hr)", synthesize(df, "sleep_delta"))
     i = df.columns.get_loc("Headphone Audio Exposure (dBASPL)")
     df.insert(i, "Max Audio Exposure (dBASPL)", synthesize(df, "audio"))
     i = df.columns.get_loc("Blood Pressure [Systolic] (mmHg)")
     df.insert(i, "Mean Blood Pressure (mmHg)", synthesize(df, "bp"))
-    """
     # mood(df)
+    """
 
     return df
 
