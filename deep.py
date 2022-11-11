@@ -135,13 +135,11 @@ def convert(file, mode="csv"):
                 # check if data["data"]["metrics"][i]["data"][0] has a key "heartRate" which is a list
                 try:
                     if "heartRate" in data["data"]["metrics"][i]["data"][0]:
-                        print(len(data["data"]["metrics"][i]["data"]["heartRate"]))
                         for j in range(len(data["data"]["metrics"][i]["data"]["heartRate"])):
                             df.at[j,
                                   "Heart Rate"] = data["data"]["metrics"][i]["data"]["heartRate"][j]["hr"]
                             df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                 except Exception as e:
-                    print(e)
                     continue
                 
                 
@@ -157,7 +155,6 @@ def convert(file, mode="csv"):
                     # convert date to datetime
                     df[i] = pd.to_datetime(df[i])
             except ValueError as e:
-                print(e)
                 continue
 
     # convert to datetime
