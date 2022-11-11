@@ -132,14 +132,16 @@ def convert(file, mode="csv"):
                         except KeyError as e:
                             continue
                 
-                # if data["data"]["metrics"][i]["data"] has a key calles "heartRate"
+                # check if data["data"]["metrics"][i]["data"][0] has a key "heartRate" which is a list
                 try:
                     if "heartRate" in data["data"]["metrics"][i]["data"][0]:
+                        print(len(data["data"]["metrics"][i]["data"]["heartRate"]))
                         for j in range(len(data["data"]["metrics"][i]["data"]["heartRate"])):
                             df.at[j,
                                   "Heart Rate"] = data["data"]["metrics"][i]["data"]["heartRate"][j]["hr"]
                             df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                 except Exception as e:
+                    print(e)
                     continue
                 
                 

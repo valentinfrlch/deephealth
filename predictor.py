@@ -216,6 +216,15 @@ def predict_next(df, horizon=7, smoothness=10):
         lineplot(f"Prediction of {name_reconstruct(dp)}", dp, [
                  [past, "#77B7EE"], [future, "#00E89D"]])
 
+def overlay(dates=[["2022-05-05", "Eintritt"], ["2022-05-27", "Austritt"]]):
+    # overlay the dates and return the plot
+    for date in dates:
+        # convert date[0] to datetime
+        date[0] = pd.to_datetime(date[0])
+        plt.axvline(date[0], color='#6E7A8B', linestyle='--')
+        # add a label to the line
+        plt.text(date[0], 0, date[1], rotation=90, color='#6E7A8B')
+
 
 def lineplot(title, dptitle, data, consecutive=True):
     """_summary_: Produces a lineplot of given data.
@@ -250,6 +259,8 @@ def lineplot(title, dptitle, data, consecutive=True):
     # set axis tick color
     ax.tick_params(axis='x', colors='#6E7A8B')
     ax.tick_params(axis='y', colors='#6E7A8B')
+    
+    overlay()
 
     # set text color
     plt.rcParams['text.color'] = 'white'
