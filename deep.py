@@ -103,7 +103,7 @@ def convert(file, mode="csv"):
                         df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                     except KeyError:
                         continue
-                
+
                 # Blood Pressure
                 if names[i] == "blood_pressure":
                     for j in range(len(data["data"]["metrics"][i]["data"])):
@@ -115,7 +115,7 @@ def convert(file, mode="csv"):
                             df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                         except KeyError:
                             continue
-                
+
                 # Sleep Analysis
                 if names[i] == "sleep_analysis":
                     for j in range(len(data["data"]["metrics"][i]["data"])):
@@ -163,7 +163,7 @@ def convert(file, mode="csv"):
     diastolic = [col for col in df.columns if "Diastolic" in col][0]
     df["Average Blood Pressure"] = (df[systolic] + df[diastolic]) / 2
     
-    
+
     """
     df.insert(i, "Sleep Delta (hr)", synthesize(df, "sleep_delta"))
     i = df.columns.get_loc("Headphone Audio Exposure (dBASPL)")
@@ -185,7 +185,7 @@ def relevance(dp):
     Returns:
         _type_: Column where outliers have been removed
     """
-    
+
     mean = np.mean(dp)
     std = np.std(dp)
     dp = dp[dp.between(mean - 3 * std, mean + 3 * std)]
