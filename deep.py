@@ -135,15 +135,15 @@ def convert(file, mode="csv"):
                 # if data["data"]["metrics"][i]["data"] has a key calles "heartRate"
                 try:
                     if "heartRate" in data["data"]["metrics"][i]["data"][0]:
-                        for j in range(len(data["data"]["metrics"][i]["data"])):
-                                df.at[j,
-                                    "Heart Rate (bpm)"] = data["data"]["metrics"][i]["data"][j]["heartRate"]["hr"]
-                                df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
+                        for j in range(len(data["data"]["metrics"][i]["data"]["heartRate"])):
+                            df.at[j,
+                                  "Heart Rate"] = data["data"]["metrics"][i]["data"][j]["heartRate"]["hr"]
+                            df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                 except Exception as e:
                     continue
                 
                 
-            print(df.columns.__contains__("Heart Rate (bpm)"))
+            print(df.columns.__contains__("Heart Rate"))
 
             names.append("Date")
 
