@@ -131,7 +131,8 @@ def convert(file, mode="csv"):
                             df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                         except KeyError:
                             continue
-                if names[i] == "heart_rate":
+                # if contains "heart_rate" as key
+                if data["data"]["metrics"][i]["data"][0]["heart_rate"] is not None:
                     for j in range(len(data["data"]["metrics"][i]["data"])):
                         try:
                             df.at[j,
@@ -139,7 +140,6 @@ def convert(file, mode="csv"):
                             df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                         except KeyError:
                             continue
-            
             print(df.columns.__contains__("Heart Rate (bpm)"))
 
             names.append("Date")
@@ -155,16 +155,15 @@ def convert(file, mode="csv"):
                 print(e)
                 continue
 
-    #convert to datetime 
+    # convert to datetime
     df.set_index("Date", inplace=True)
     df.index = pd.to_datetime(df.index, utc=True)
-    
 
     df.sort_index(inplace=True)
-    
+
     for i in df.columns:
         df[i].interpolate(method="linear", inplace=True)
-    
+
     df.dropna(axis=1, how='all', inplace=True)
 
     headphone = [col for col in df.columns if "headphone" in col][0]
@@ -176,7 +175,6 @@ def convert(file, mode="csv"):
     systolic = [col for col in df.columns if "Systolic" in col][0]
     diastolic = [col for col in df.columns if "Diastolic" in col][0]
     df["Average Blood Pressure"] = (df[systolic] + df[diastolic]) / 2
-    
 
     """
     df.insert(i, "Sleep Delta (hr)", synthesize(df, "sleep_delta"))
