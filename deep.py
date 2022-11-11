@@ -135,11 +135,12 @@ def convert(file, mode="csv"):
                     for j in range(len(data["data"]["metrics"][i]["data"])):
                         try:
                             df.at[j,
-                                  "Heart Rate [Resting] (bpm)"] = data["data"]["metrics"][i]["data"][j]["heartRate"]["hr"]
+                                  "Heart Rate (bpm)"] = data["data"]["metrics"][i]["data"][j]["heartRate"]["hr"]
                             df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
-                        except KeyError as e:
-                            print(e)
+                        except KeyError:
                             continue
+            
+            print(df.columns.__contains__("Heart Rate (bpm)"))
 
             names.append("Date")
 
