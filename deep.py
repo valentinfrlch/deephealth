@@ -132,14 +132,16 @@ def convert(file, mode="csv"):
                         except KeyError:
                             continue
                 # if contains "heart_rate" as key
-                if data["data"]["metrics"][i]["data"][0]["heart_rate"] is not None:
-                    for j in range(len(data["data"]["metrics"][i]["data"])):
-                        try:
-                            df.at[j,
-                                  "Heart Rate (bpm)"] = data["data"]["metrics"][i]["data"][j]["heartRate"]["hr"]
-                            df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
-                        except KeyError:
-                            continue
+                try:
+                    if data["data"]["metrics"][i]["data"][0]["heart_rate"] is not None:
+                        for j in range(len(data["data"]["metrics"][i]["data"])):
+                                df.at[j,
+                                    "Heart Rate (bpm)"] = data["data"]["metrics"][i]["data"][j]["heartRate"]["hr"]
+                                df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
+                except KeyError:
+                    continue
+                
+                
             print(df.columns.__contains__("Heart Rate (bpm)"))
 
             names.append("Date")
