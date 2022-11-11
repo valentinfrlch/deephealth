@@ -137,7 +137,7 @@ def convert(file, mode="csv"):
                     if "heartRate" in data["data"]["metrics"][i]["data"][0]:
                         for j in range(len(data["data"]["metrics"][i]["data"]["heartRate"])):
                             df.at[j,
-                                  "Heart Rate"] = data["data"]["metrics"][i]["data"][j]["heartRate"]["hr"]
+                                  "Heart Rate"] = data["data"]["metrics"][i]["data"]["heartRate"][j]["hr"]
                             df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                 except Exception as e:
                     continue
