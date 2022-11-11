@@ -137,7 +137,8 @@ def convert(file, mode="csv"):
                             df.at[j,
                                   "Heart Rate [Resting] (bpm)"] = data["data"]["metrics"][i]["data"][j]["heartRate"]["hr"]
                             df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
-                        except KeyError:
+                        except KeyError as e:
+                            print(e)
                             continue
 
             names.append("Date")
