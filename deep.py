@@ -151,6 +151,10 @@ def convert(file, mode="csv"):
     
 
     df.sort_index(inplace=True)
+    
+    for i in df.columns:
+        df[i].interpolate(method="linear", inplace=True)
+    
     df.dropna(axis=1, how='all', inplace=True)
 
     headphone = [col for col in df.columns if "headphone" in col][0]
@@ -174,23 +178,6 @@ def convert(file, mode="csv"):
     """
 
     return df
-
-
-def relevance(dp):
-    """_summary_
-
-    Args:
-        dp (_type_): Data point (column) in dataframe
-
-    Returns:
-        _type_: Column where outliers have been removed
-    """
-
-    mean = np.mean(dp)
-    std = np.std(dp)
-    dp = dp[dp.between(mean - 3 * std, mean + 3 * std)]
-    dp = dp.reset_index(drop=True)
-    return dp
 
 
 def correlation(df):
