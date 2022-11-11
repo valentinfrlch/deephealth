@@ -348,7 +348,7 @@ if __name__ == '__main__':
     mean_accuracy = np.mean([float(acc[1][:-1]) for acc in accuracies])
     print(f"Mean accuracy: {mean_accuracy}%") """
 
-    predict_next(df, horizon=90, smoothness=1)
+    predict_next(df, horizon=90, smoothness=7)
     # decompose(df, 'Mood')
     # train(df, horizon=90, smoothness=10)
     # model, accuracy = predict(df, "Mood", horizon=90, plot=True)
