@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import numpy as np
 import json
 import networkx as nx
 from pyvis.network import Network
@@ -102,7 +103,8 @@ def convert(file, mode="csv"):
                         df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                     except KeyError:
                         continue
-                # add blood pressure which is in a different format
+                
+                # Blood Pressure
                 if names[i] == "blood_pressure":
                     for j in range(len(data["data"]["metrics"][i]["data"])):
                         try:
@@ -110,6 +112,22 @@ def convert(file, mode="csv"):
                                   "Blood Pressure [Systolic] (mmHg)"] = data["data"]["metrics"][i]["data"][j]["systolic"]
                             df.at[j,
                                   "Blood Pressure [Diastolic] (mmHg)"] = data["data"]["metrics"][i]["data"][j]["diastolic"]
+                            df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
+                        except KeyError:
+                            continue
+                
+                # Sleep Analysis
+                if names[i] == "sleep_analysis":
+                    for j in range(len(data["data"]["metrics"][i]["data"])):
+                        try:
+                            df.at[j,
+                                  "Sleep Analysis [In Bed] (hr)"] = data["data"]["metrics"][i]["data"][j]["inBed"]
+                            df.at[j,
+                                  "Sleep Analysis [Asleep] (hr)"] = data["data"]["metrics"][i]["data"][j]["asleep"]
+                            # add Sleep Delta
+                            delta = data["data"]["metrics"][i]["data"][j]["inBed"] - \
+                                data["data"]["metrics"][i]["data"][j]["asleep"]
+                            df.at[j, "Sleep Delta (hr)"] = delta
                             df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                         except KeyError:
                             continue
@@ -145,6 +163,7 @@ def convert(file, mode="csv"):
     diastolic = [col for col in df.columns if "Diastolic" in col][0]
     df["Average Blood Pressure"] = (df[systolic] + df[diastolic]) / 2
     
+    
     """
     df.insert(i, "Sleep Delta (hr)", synthesize(df, "sleep_delta"))
     i = df.columns.get_loc("Headphone Audio Exposure (dBASPL)")
@@ -155,6 +174,23 @@ def convert(file, mode="csv"):
     """
 
     return df
+
+
+def relevance(dp):
+    """_summary_
+
+    Args:
+        dp (_type_): Data point (column) in dataframe
+
+    Returns:
+        _type_: Column where outliers have been removed
+    """
+    
+    mean = np.mean(dp)
+    std = np.std(dp)
+    dp = dp[dp.between(mean - 3 * std, mean + 3 * std)]
+    dp = dp.reset_index(drop=True)
+    return dp
 
 
 def correlation(df):

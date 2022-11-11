@@ -2,14 +2,12 @@ from deep import *
 import helpers as helpers
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.graphics.tsaplots import plot_acf
-import numpy as np
 from matplotlib import font_manager
 import re
 import progressbar
 from matplotlib import dates as mdates
 
 from lightgbm import LGBMRegressor
-import datetime
 
 
 def decompose(df, datapoint, period=24):
