@@ -160,7 +160,6 @@ def train(df, horizon=7, smoothness=10):
             mode, accuracy = predict(
                 df, dp, horizon=horizon, plot=True, smoothness=smoothness)
         except ValueError as e:
-            print(e)
             continue
 
 

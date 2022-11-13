@@ -24,6 +24,24 @@ def synthesize(df, value):
         v = None
     return v
 
+def fitness(df):
+    # calculate a fitness score for each day in percentage
+    # get all the necessary data from the dataframe
+    sleep_delta = df["Sleep Delta (hr)"]
+    v02_max = df["vo2_max"]
+    resting_hr = df["resting_heart_rate"]
+    # calculate the fitness score in percentage
+    # set "good" values for each data for age 18-20
+    sleep_max = 8
+    v02_max_max = 60
+    resting_hr_max = 60
+    # calculate the fitness score
+    fitness = ((sleep_delta / sleep_max) * 0.3 + \
+        (v02_max / v02_max_max) * 0.3 + (resting_hr / resting_hr_max) * 0.4) * 100
+    # add fitness score to dataframe
+    df["Fitness"] = fitness
+        
+
 
 def mood(df):
     # add json to dataframe
@@ -46,25 +64,28 @@ def mood(df):
                 if j not in tag_values:
                     tag_values.append(j)
 
-        for d, h, t in zip(date, happiness, tags):
-            # locate row with matching date
-            date = df.loc[df['Date'] == d]
-            # get index of row
-            try:
-                i = date.index[0]
-            except IndexError:
-                continue
-            # insert happiness and tags into dataframe at index
-            df.at[i, 'Mood'] = h
-            for v in tag_values:
-                if v in t:
-                    #  insert True if tag is in list
-                    df.at[i, v] = True
-                    # convert column to boolean
-                else:
-                    df.at[i, v] = False
-                df[v] = df[v].astype(bool)
 
+        # set all dates in date list to datetime format with hour=23, minute=0, second=0
+        for i in range(len(date)):
+            date[i] = pd.to_datetime(date[i], format='%Y-%m-%d')
+            # date[i] = date[i].replace(hour=23, minute=0, second=0)
+        
+        for i in range(len(df['Date'])):
+            df['Date'][i] = pd.to_datetime(df['Date'][i], format='%Y-%m-%d')
+            # df['Date'][i] = df['Date'][i].replace(hour=23, minute=0, second=0
+        
+        for d, h in zip(date, happiness):
+            try:
+                # get row number where d except hour min and seconds is equal to the "Date" column
+                d1 = df['Date'].dt.date
+                d2 = d.date()
+                index = df.loc[d1 == d2].index[0]
+                df.at[index, 'Mood'] = h
+            except Exception as e:
+                print(e)
+                continue
+                
+                
 
 def audio(df):
     # add the higher value of headphone and environmental audio exposure
@@ -132,7 +153,7 @@ def convert(file, mode="csv"):
                         except KeyError as e:
                             continue
                 
-                # check if data["data"]["metrics"][i]["data"][0] has a key "heartRate" which is a list
+                # Heart Rate
                 try:
                     if "heartRate" in data["data"]["metrics"][i]["data"][0]:
                         for j in range(len(data["data"]["metrics"][i]["data"]["heartRate"])):
@@ -141,18 +162,20 @@ def convert(file, mode="csv"):
                             df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                 except Exception as e:
                     continue
-                
-                
-            print(df.columns.__contains__("Heart Rate"))
 
             names.append("Date")
 
+        # Mood
+        #mood(df)
+        
+        # Fitness
+        fitness(df)
+        
         for i in df.columns:
             try:
                 if i != "Date":
                     df[i] = df[i].astype(float)
                 else:
-                    # convert date to datetime
                     df[i] = pd.to_datetime(df[i])
             except ValueError as e:
                 continue
@@ -167,7 +190,6 @@ def convert(file, mode="csv"):
         df[i].interpolate(method="linear", inplace=True)
 
     df.dropna(axis=1, how='all', inplace=True)
-
     headphone = [col for col in df.columns if "headphone" in col][0]
     environmental = [col for col in df.columns if "environmental" in col][0]
 
@@ -184,7 +206,6 @@ def convert(file, mode="csv"):
     df.insert(i, "Max Audio Exposure (dBASPL)", synthesize(df, "audio"))
     i = df.columns.get_loc("Blood Pressure [Systolic] (mmHg)")
     df.insert(i, "Mean Blood Pressure (mmHg)", synthesize(df, "bp"))
-    # mood(df)
     """
 
     return df
