@@ -35,9 +35,10 @@ def fitness(df):
     sleep_max = 8
     v02_max_max = 60
     resting_hr_max = 60
+    
     # calculate the fitness score
-    fitness = ((sleep_delta / sleep_max) * 0.3 + \
-        (v02_max / v02_max_max) * 0.3 + (resting_hr / resting_hr_max) * 0.4) * 100
+    fitness = ((sleep_delta / sleep_max) * 0.2 + \
+        (v02_max / v02_max_max) * 0.5 + (resting_hr_max / resting_hr) * 0.3) * 100
     # add fitness score to dataframe
     df["Fitness"] = fitness
         
