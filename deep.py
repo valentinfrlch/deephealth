@@ -28,18 +28,28 @@ def fitness(df):
     # calculate a fitness score for each day in percentage
     # get all the necessary data from the dataframe
     sleep_delta = df["Sleep Delta (hr)"]
+    asleep = df["Sleep Analysis [Asleep] (hr)"]
     v02_max = df["vo2_max"]
     resting_hr = df["resting_heart_rate"]
-    # calculate the fitness score in percentage
-    # set "good" values for each data for age 18-20
-    sleep_max = 8
+    body_fat = df["body_fat_percentage"]
+
+    sleep_delta_max = 3
+    asleep_max = 9
+    absolute_sleep_max = 9
     v02_max_max = 60
     resting_hr_max = 60
+    body_fat_max = 20
+
+    # lower body fat percentage is better
+    # higher v02 max is better
+    # lower resting heart rate is better
+    # lower sleep delta is better
+    # higher asleep is better
     
     # calculate the fitness score
-    fitness = ((sleep_delta / sleep_max) * 0.2 + \
-        (v02_max / v02_max_max) * 0.5 + (resting_hr_max - resting_hr) * 0.3) * 100
-    # add fitness score to dataframe
+    fitness = (sleep_delta / sleep_delta_max) + (asleep / asleep_max) + (v02_max /
+                                                                         v02_max_max) + (resting_hr_max / resting_hr) + (body_fat_max / body_fat) * 100
+
     df["Fitness"] = fitness
         
 
