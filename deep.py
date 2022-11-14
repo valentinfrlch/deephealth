@@ -40,11 +40,12 @@ def fitness(df):
     resting_hr_max = 60
     body_fat_max = 20
 
-    # lower body fat percentage is better
-    # higher v02 max is better
-    # lower resting heart rate is better
-    # lower sleep delta is better
-    # higher asleep is better
+    # disregrard values that are 0
+    sleep_delta = sleep_delta[sleep_delta != 0]
+    asleep = asleep[asleep != 0]
+    v02_max = v02_max[v02_max != 0]
+    resting_hr = resting_hr[resting_hr != 0]
+    body_fat = body_fat[body_fat != 0]
     
     # calculate the fitness score
     fitness = (sleep_delta / sleep_delta_max) + (asleep / asleep_max) + (v02_max /
