@@ -48,8 +48,7 @@ def fitness(df):
     body_fat = body_fat[body_fat != 0]
     
     # calculate the fitness score
-    fitness = (sleep_delta / sleep_delta_max) + (asleep / asleep_max) + (v02_max /
-                                                                         v02_max_max) + (resting_hr_max / resting_hr) + (body_fat_max / body_fat) * 100
+    fitness = (sleep_delta / sleep_delta_max) + (asleep_max / asleep) + (v02_max / v02_max_max) + (resting_hr_max / resting_hr) + (body_fat_max / body_fat) * 100
 
     df["Fitness"] = fitness
         
