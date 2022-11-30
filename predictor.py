@@ -215,7 +215,7 @@ def predict_next(df, horizon=7, smoothness=10):
                  [past, "#77B7EE"], [future, "#00E89D"]])
 
 
-def overlay(dates=[["2022-05-05", "Eintritt 1"], ["2022-05-27", "Austritt 1"], ["2022-11-23", "Eintritt 2"]]):
+def overlay(dates=[["2022-05-05", "Eintritt 1"], ["2022-05-27", "Austritt 1"], ["2022-11-23", "Eintritt 2"], ["2022-12-15", "Austritt 2"]]):
     # overlay the dates and return the plot
     for date in dates:
         # convert date[0] to datetime
