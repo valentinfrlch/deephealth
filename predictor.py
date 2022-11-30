@@ -70,7 +70,7 @@ def predict(df, datapoint, horizon=7, plot=False, smoothness=10):
 
     # rolling average of predictions and y_test
     y_test = y_test.rolling(smoothness).mean()
-    
+
     # predictions to dataframe
     predictions = pd.DataFrame(
         predictions, index=y_test.index, columns=[datapoint])
@@ -200,14 +200,13 @@ def predict_next(df, horizon=7, smoothness=10):
         last_value = past.iloc[-1].values[0]
         # get the last date of the past data
         last_date = past.index[-1]
-        
 
         # put the last value and date into a dataframe as first row use date as index
         future = pd.concat([pd.DataFrame([[last_value, last_date]], columns=[
                            dp, 'Date']).set_index('Date'), future])
-        
+
         future = future.drop(future.columns[1], axis=1)
-        
+
         # convert index to datetime
         future.index = pd.to_datetime(future.index)
         past.index = pd.to_datetime(past.index)
@@ -245,11 +244,11 @@ def lineplot(title, dptitle, data, consecutive=True):
               fontname='Product Sans', y=1.038)
 
     plt.grid(color='#6E7A8B')
-    
+
     # display monthly ticks with short year format
     ax.xaxis.set_major_locator(mdates.MonthLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %y'))
-    
+
     ax.set_facecolor('#021631')
 
     ax.spines['bottom'].set_color('#6E7A8B')
@@ -259,13 +258,13 @@ def lineplot(title, dptitle, data, consecutive=True):
     # set axis tick color
     ax.tick_params(axis='x', colors='#6E7A8B')
     ax.tick_params(axis='y', colors='#6E7A8B')
-    
+
     overlay()
 
     # set text color
     plt.rcParams['text.color'] = 'white'
     plt.rcParams["font.family"] = "Product Sans"
-    
+
     # interpolate the dataframe and plot it
     i = 0
 
@@ -285,13 +284,13 @@ def lineplot(title, dptitle, data, consecutive=True):
         except ValueError as e:
             continue
 
-
     if consecutive:
         if len(data) > 1:
             x1, y1 = data[0][0].index[len(
                 data[0][0]) - 1], data[0][0].iloc[-1].values[0]
             x2, y2 = data[1][0].index[0], data[1][0].iloc[0].values[0]
-            plt.plot([x1, x2], [y1, y2], color=data[1][1], linestyle=':', linewidth=2)
+            plt.plot([x1, x2], [y1, y2], color=data[1]
+                     [1], linestyle=':', linewidth=2)
             plt.plot(x1, y1, marker='o', color=data[0][1], markersize=8)
             plt.plot(x1, y1, marker='o', color="white", markersize=4)
 
@@ -333,6 +332,7 @@ def name_reconstruct(name, equalize=False, bold=False):
 if __name__ == '__main__':
     accuracies = []
     df = preprocess("dataset/export.json")
+    # mood(df)
     """
     #next_week(df)
     for dp in df.columns:

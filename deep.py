@@ -55,47 +55,33 @@ def fitness(df):
 
 
 def mood(df):
-    # add json to dataframe
-    with open('dataset/mood.json') as f:
-        data = json.load(f)
+    """Get the mood, and emotion from mood.json and insert it into the dataframe
 
-        date = []
-        happiness = []
-        tags = []
+    Args:
+        df (dataframe): The dataframe to insert the mood into
+    """
+    # read the mood.json file
+    with open("dataset/mood.json") as f:
+        mood = json.load(f)
 
-        for i in data:
-            date.append(i['date'])
-            happiness.append(i['mood'])
-            tags.append(i['emotions'])
+        # create a new dataframe with the mood data
+        mood_df = pd.DataFrame(mood)
+        # convert date to datetime but ignore the time
+        mood_df["date"] = pd.to_datetime(mood_df["date"]).dt.date
+        # set the date as index
+        mood_df.set_index("date", inplace=True)
+        print(df.index)
+        for date in df.index:
+            # convert the date to datetime but ignore the time
+            date = pd.to_datetime(date).date()
+            # check if there is mood data for the date
+            if date in mood_df.index:
+                # add the mood and emotion to the dataframe
+                df.at[date, "mood"] = float(mood_df.loc[date, "mood"])
+                df.at[date, "emotion"] = float(mood_df.loc[date, "emotion"])
+        print(df.columns)
 
-        # get all different happiness values
-        tag_values = []
-        for i in tags:
-            for j in i:
-                if j not in tag_values:
-                    tag_values.append(j)
 
-
-        # set all dates in date list to datetime format with hour=23, minute=0, second=0
-        for i in range(len(date)):
-            date[i] = pd.to_datetime(date[i], format='%Y-%m-%d')
-            # date[i] = date[i].replace(hour=23, minute=0, second=0)
-        
-        for i in range(len(df['Date'])):
-            df['Date'][i] = pd.to_datetime(df['Date'][i], format='%Y-%m-%d')
-            # df['Date'][i] = df['Date'][i].replace(hour=23, minute=0, second=0
-        
-        for d, h in zip(date, happiness):
-            try:
-                # get row number where d except hour min and seconds is equal to the "Date" column
-                d1 = df['Date'].dt.date
-                d2 = d.date()
-                index = df.loc[d1 == d2].index[0]
-                df.at[index, 'Mood'] = h
-            except Exception as e:
-                print(e)
-                continue
-                
                 
 
 def audio(df):
