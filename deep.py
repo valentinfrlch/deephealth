@@ -132,7 +132,11 @@ def convert(file, mode="csv"):
                                   "Blood Pressure [Diastolic] (mmHg)"] = data["data"]["metrics"][i]["data"][j]["diastolic"]
                             df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                         except KeyError:
+                            print("KeyError")
                             continue
+                    # print the last 50 blood pressure values and the date
+                    print(df[["Blood Pressure [Systolic] (mmHg)",
+                              "Blood Pressure [Diastolic] (mmHg)", "Date"]][-50:])
 
                 # Sleep Analysis
                 if names[i] == "sleep_analysis":
@@ -143,8 +147,7 @@ def convert(file, mode="csv"):
                             df.at[j,
                                   "Sleep Analysis [Asleep] (hr)"] = data["data"]["metrics"][i]["data"][j]["asleep"]
                             # add Sleep Delta
-                            delta = data["data"]["metrics"][i]["data"][j]["inBed"] - \
-                                data["data"]["metrics"][i]["data"][j]["asleep"]
+                            delta = abs(data["data"]["metrics"][i]["data"][j]["inBed"] - data["data"]["metrics"][i]["data"][j]["asleep"])
                             df.at[j, "Sleep Delta (hr)"] = delta
                             df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
                         except KeyError as e:
@@ -186,7 +189,7 @@ def convert(file, mode="csv"):
     for i in df.columns:
         df[i].interpolate(method="linear", inplace=True)
 
-    df.dropna(axis=1, how='all', inplace=True)
+    # todo: synthesize() function
     headphone = [col for col in df.columns if "headphone" in col][0]
     environmental = [col for col in df.columns if "environmental" in col][0]
 
