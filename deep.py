@@ -174,7 +174,7 @@ def convert(file, mode="json"):
     # add average of systolic and diastolic blood pressure
     systolic = [col for col in df.columns if "Systolic" in col][0]
     diastolic = [col for col in df.columns if "Diastolic" in col][0]
-    df["Average Blood Pressure"] = (df[systolic] + df[diastolic]) / 2
+    df["Blood Pressure Indicator"] = (df[systolic] + df[diastolic]) / 2
 
     """
     df.insert(i, "Sleep Delta (hr)", synthesize(df, "sleep_delta"))

@@ -165,7 +165,6 @@ def train(df, horizon=7, smoothness=10):
 
 def preprocess(path):
     df = convert(path, "json")
-    df = df.select_dtypes(exclude=['object'])
     df = df.rename(columns=lambda x: re.sub('[^A-Za-z0-9_]+', '', x))
     return df
 
@@ -202,7 +201,7 @@ def predict_next(df, horizon=7, smoothness=10):
         last_date = past.index[-1]
 
         # put the last value and date into a dataframe as first row use date as index
-        future = pd.concat([pd.DataFrame([[last_value, last_date]], columns=[
+        future = pd.concat([pd.DataFrame([[last_date, last_value]], columns=[
                            dp, 'Date']).set_index('Date'), future])
 
         future = future.drop(future.columns[1], axis=1)
@@ -273,9 +272,6 @@ def lineplot(title, dptitle, data, consecutive=True):
         try:
             d[0] = d[0][~d[0].index.duplicated(keep='first')]
             d[0] = d[0].sort_index()
-            # only run when this is the first iteration
-            if i == 1:
-                d[0] = d[0].iloc[10:, :]
 
             d[0] = d[0].reindex(pd.date_range(
                 d[0].index[0], d[0].index[-1], freq='1H'))
