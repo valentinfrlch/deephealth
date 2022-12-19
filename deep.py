@@ -91,7 +91,7 @@ def audio(df):
     return max_audio_exposure
 
 
-def convert(file, mode="csv"):
+def convert(file, mode="json"):
     if mode == "csv":
         # remove all empty columns from csv
         df = pd.read_csv(file)
@@ -302,7 +302,7 @@ def line(df, data, average=True, window=7, normalize=False):
 
 
 if __name__ == '__main__':
-    df = convert('dataset/export.csv')
+    df = convert('dataset/export.json')
     # correlation(df)
     # t = df.columns
     # to list

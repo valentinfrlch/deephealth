@@ -164,7 +164,7 @@ def train(df, horizon=7, smoothness=10):
 
 
 def preprocess(path):
-    df = convert(path, "csv")
+    df = convert(path, "json")
     df = df.select_dtypes(exclude=['object'])
     df = df.rename(columns=lambda x: re.sub('[^A-Za-z0-9_]+', '', x))
     return df
