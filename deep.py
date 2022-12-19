@@ -77,9 +77,7 @@ def mood(df):
             # check if there is mood data for the date
             if date in mood_df.index:
                 # add the mood and emotion to the dataframe
-                df.at[date, "mood"] = float(mood_df.loc[date, "mood"])
-                df.at[date, "emotion"] = float(mood_df.loc[date, "emotion"])
-        print(df.columns)
+                print(date)
 
 
                 
@@ -100,10 +98,7 @@ def convert(file, mode="json"):
         # create a dataframe from json file
         with open(file) as f:
             data = json.load(f)
-            # convert to dataframe
             names = []
-            values = []
-            datetime = []
             for i in data["data"]["metrics"]:
                 names.append(i["name"])
 
@@ -116,9 +111,10 @@ def convert(file, mode="json"):
                 for j in range(len(data["data"]["metrics"][i]["data"])):
                     # print progress in percentage
                     try:
-                        df.at[j, names[i]
-                              ] = data["data"]["metrics"][i]["data"][j]["qty"]
-                        df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
+                        # get the date and value from the json file and add the value to the dataframe at the correct date
+                        date = pd.to_datetime(data["data"]["metrics"][i]["data"][j]["date"]).date()
+                        value = data["data"]["metrics"][i]["data"][j]["qty"]
+                        df.at[date, names[i]] = value
                     except KeyError:
                         continue
 
@@ -126,45 +122,31 @@ def convert(file, mode="json"):
                 if names[i] == "blood_pressure":
                     for j in range(len(data["data"]["metrics"][i]["data"])):
                         try:
-                            df.at[j,
-                                  "Blood Pressure [Systolic] (mmHg)"] = data["data"]["metrics"][i]["data"][j]["systolic"]
-                            df.at[j,
-                                  "Blood Pressure [Diastolic] (mmHg)"] = data["data"]["metrics"][i]["data"][j]["diastolic"]
-                            df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
+                            # get the date and value from the json file and add the value to the dataframe at the correct date
+                            date = pd.to_datetime(data["data"]["metrics"][i]["data"][j]["date"]).date()
+                            systolic = data["data"]["metrics"][i]["data"][j]["systolic"]
+                            diastolic = data["data"]["metrics"][i]["data"][j]["diastolic"]
+                            df.at[date, "Blood Pressure [Systolic] (mmHg)"] = systolic
+                            df.at[date, "Blood Pressure [Diastolic] (mmHg)"] = diastolic
                         except KeyError:
                             print("KeyError")
                             continue
-                    # print the last 50 blood pressure values and the date
-                    print(df[["Blood Pressure [Systolic] (mmHg)",
-                              "Blood Pressure [Diastolic] (mmHg)", "Date"]][-50:])
 
                 # Sleep Analysis
                 if names[i] == "sleep_analysis":
                     for j in range(len(data["data"]["metrics"][i]["data"])):
                         try:
-                            df.at[j,
+                            date = pd.to_datetime(data["data"]["metrics"][i]["data"][j]["date"]).date()
+                            df.at[date,
                                   "Sleep Analysis [In Bed] (hr)"] = data["data"]["metrics"][i]["data"][j]["inBed"]
-                            df.at[j,
+                            df.at[date,
                                   "Sleep Analysis [Asleep] (hr)"] = data["data"]["metrics"][i]["data"][j]["asleep"]
                             # add Sleep Delta
                             delta = abs(data["data"]["metrics"][i]["data"][j]["inBed"] - data["data"]["metrics"][i]["data"][j]["asleep"])
-                            df.at[j, "Sleep Delta (hr)"] = delta
-                            df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
+                            df.at[date, "Sleep Delta (hr)"] = delta
                         except KeyError as e:
                             continue
                 
-                # Heart Rate
-                try:
-                    if "heartRate" in data["data"]["metrics"][i]["data"][0]:
-                        for j in range(len(data["data"]["metrics"][i]["data"]["heartRate"])):
-                            df.at[j,
-                                  "Heart Rate"] = data["data"]["metrics"][i]["data"]["heartRate"][j]["hr"]
-                            df.at[j, "Date"] = data["data"]["metrics"][i]["data"][j]["date"]
-                except Exception as e:
-                    continue
-
-            names.append("Date")
-
         # Mood
         #mood(df)
         
@@ -180,14 +162,8 @@ def convert(file, mode="json"):
             except ValueError as e:
                 continue
 
-    # convert to datetime
-    df.set_index("Date", inplace=True)
-    df.index = pd.to_datetime(df.index, utc=True)
-
     df.sort_index(inplace=True)
-
-    for i in df.columns:
-        df[i].interpolate(method="linear", inplace=True)
+    
 
     # todo: synthesize() function
     headphone = [col for col in df.columns if "headphone" in col][0]
