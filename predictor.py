@@ -195,15 +195,6 @@ def predict_next(df, horizon=7, smoothness=10):
         past, future = merged.iloc[:-horizon], merged.iloc[-horizon:]
         future.index = future_index
 
-        # get the last value of the past data
-        last_value = past.iloc[-1].values[0]
-        # get the last date of the past data
-        last_date = past.index[-1]
-
-        # put the last value and date into a dataframe as first row use date as index
-        future = pd.concat([pd.DataFrame([[last_date, last_value]], columns=[
-                           dp, 'Date']).set_index('Date'), future])
-
         future = future.drop(future.columns[1], axis=1)
 
         # convert index to datetime
