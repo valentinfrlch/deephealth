@@ -126,8 +126,10 @@ def convert(file, mode="json"):
                             date = pd.to_datetime(data["data"]["metrics"][i]["data"][j]["date"]).date()
                             systolic = data["data"]["metrics"][i]["data"][j]["systolic"]
                             diastolic = data["data"]["metrics"][i]["data"][j]["diastolic"]
+                            indicator = (systolic + diastolic) / 2
                             df.at[date, "Blood Pressure [Systolic] (mmHg)"] = systolic
                             df.at[date, "Blood Pressure [Diastolic] (mmHg)"] = diastolic
+                            df.at[date, "Blood Pressure Indicator"] = indicator
                         except KeyError:
                             print("KeyError")
                             continue
@@ -171,10 +173,6 @@ def convert(file, mode="json"):
 
     # add the higher value of headphone and environmental audio exposure and call the new column audio
     df["Max Audio Exposure"] = df[[headphone, environmental]].max(axis=1)
-    # add average of systolic and diastolic blood pressure
-    systolic = [col for col in df.columns if "Systolic" in col][0]
-    diastolic = [col for col in df.columns if "Diastolic" in col][0]
-    df["Blood Pressure Indicator"] = (df[systolic] + df[diastolic]) / 2
 
     """
     df.insert(i, "Sleep Delta (hr)", synthesize(df, "sleep_delta"))
