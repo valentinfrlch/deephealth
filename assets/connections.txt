@@ -1,1 +1,0 @@
-['Date', 'Active Energy (kcal)', 'Apple Exercise Time (min)', 'Apple Stand Hour (count)', 'Apple Stand Time (min)', 'Basal Energy Burned (kcal)', 'Blood Pressure [Systolic] (mmHg)', 'Blood Pressure [Diastolic] (mmHg)', 'Body Fat Percentage (%)', 'Body Mass Index (count)', 'Calcium (mg)', 'Carbohydrates (g)', 'Copper (mg)', 'Cycling Distance (km)', ...]
