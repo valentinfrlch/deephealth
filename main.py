@@ -1,4 +1,5 @@
 # libraries:
+import os
 import numpy as np
 import pandas as pd
 import torch
@@ -12,25 +13,31 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def preprocess():
-    path = "dataset/90 days.csv"
+    path = "dataset/2022.csv"
     df = pd.read_csv(path, sep=',')
     # remove columns that have only NaN values
     df = df.dropna(axis=1, how='all')
-    
+
     # convert date column to weekday
     df["Weekday"] = pd.to_datetime(df["Date"]).dt.weekday
     df["time_idx"] = df.index
+    # set the uid to "0" for all rows
+    df["uid"] = 0
+    df['index'] = df.index
+
+    print(df.head(20))
     return df
 
 
 def forecast(data, max_encoder_length=30, max_prediction_length=7):
     # TRAINING
-    training_cutoff = data["time_idx"].max() - max_prediction_length
+    training_cutoff = data["Heart Rate Variability (ms)"].max(
+    ) - max_prediction_length
     print("Training cutoff:", training_cutoff, "\n")
 
     training = TimeSeriesDataSet(
         data[lambda x: x.time_idx <= training_cutoff],
-        time_idx="time_idx",
+        time_idx="index",
         target="Resting Heart Rate (count/min)",
         group_ids=["uid"],
         min_encoder_length=max_encoder_length // 2,
@@ -38,13 +45,15 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
         min_prediction_length=1,
         max_prediction_length=max_prediction_length,
         static_categoricals=["uid"],
-        time_varying_known_reals=["time_idx", "date"],
-        time_varying_unknown_reals=['tr'],
+        time_varying_known_reals=["index", "date"],
+        time_varying_unknown_reals=['Heart Rate Variability (ms)', 'Active Energy (kJ)', 'Apple Exercise Time (min)', 'Apple Exercise Time (min)',
+                                    'Basal Energy Burned (kJ)', 'Environmental Audio Exposure (dBASPL)', 'Flights Climbed (count)', 'Headphone Audio Exposure (dBASPL)', 'Heart Rate [Min] (count/min)', 'Heart Rate [Max] (count/min)', 'Heart Rate [Avg] (count/min)', 'Heart Rate Variability (ms)', 'Resting Heart Rate (count/min)'],
         target_normalizer=GroupNormalizer(
-            groups=["uid"], transformation="count"
+            groups=["uid"], transformation="softplus"
         ),  # we normalize by group
         categorical_encoders={
-            "uid": NaNLabelEncoder(add_nan=True)  # special encoder for categorical target
+            # special encoder for categorical target
+            "uid": NaNLabelEncoder(add_nan=True)
         },
         add_relative_time_idx=True,
         add_target_scales=True,
@@ -61,9 +70,8 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
         train=True, batch_size=batch_size, num_workers=12)
     validation_dataloader = validation.to_dataloader(
         train=False, batch_size=batch_size * 10, num_workers=12)
-    
-    
-    #debug
+
+    # debug
     """
     x, y = next(iter(training_dataloader))
     print(x['encoder_target'])
@@ -146,6 +154,32 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
         fig.savefig(f"results/prediction_{uid}.png")
 
 
+def visualize(data):
+    # use matplotlib to visualize the data, different stocks have different colors
+    plt.figure(figsize=(15, 8))
+    for uid in data["uid"].unique():
+        # x axis is time_idx, y axis is rtn
+        plt.plot(
+            data[data["uid"] == uid]["Heart Rate [Avg] (count/min)"],
+            label=uid,
+        )
+        plt.plot(
+            data[data["uid"] == uid]["Heart Rate [Max] (count/min)"],
+            label=uid,
+        )
+        plt.plot(
+            data[data["uid"] == uid]["Heart Rate [Min] (count/min)"],
+            label=uid,
+        )
+        # add legend
+        plt.legend()
+    # break # plot only the first chart
+    plt.title("Returns {uid}")
+    # save the figure to /results
+    plt.savefig('visual.png')
+
+
 if __name__ == "__main__":
-    preprocess()
-    # forecast()
+    data = preprocess()
+    # visualize(data)
+    forecast(data)
