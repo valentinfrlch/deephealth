@@ -16,7 +16,6 @@ if torch.backends.mps.is_available():
     # enable cpu fallback
     os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'
     # print environment variables
-    print(os.environ)
 elif torch.cuda.is_available():
     device = "cuda"
     workers = 12
