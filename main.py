@@ -52,7 +52,7 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
     training = TimeSeriesDataSet(
         data[lambda x: x.index <= training_cutoff],
         time_idx="index",
-        target="Resting Heart Rate (count/min)",
+        target="Heart Rate Variability (ms)",
         group_ids=["uid"],
         min_encoder_length=max_encoder_length // 2,
         max_encoder_length=max_encoder_length,
@@ -60,7 +60,7 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
         max_prediction_length=max_prediction_length,
         static_categoricals=["uid"],
         time_varying_known_reals=["index", "Date"],
-        time_varying_unknown_reals=['Heart Rate Variability (ms)', 'Active Energy (kJ)', 'Apple Exercise Time (min)', 'Apple Exercise Time (min)',
+        time_varying_unknown_reals=['Active Energy (kJ)', 'Apple Exercise Time (min)', 'Apple Exercise Time (min)',
                                     'Basal Energy Burned (kJ)', 'Environmental Audio Exposure (dBASPL)', 'Flights Climbed (count)', 'Headphone Audio Exposure (dBASPL)', 'Heart Rate [Min] (count/min)', 'Heart Rate [Max] (count/min)', 'Heart Rate [Avg] (count/min)', 'Heart Rate Variability (ms)', 'Resting Heart Rate (count/min)'],
         target_normalizer=GroupNormalizer(
             groups=["uid"], transformation="softplus"
@@ -101,7 +101,7 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
     (actuals - baseline_predictions).abs().mean().item()
 
     early_stop_callback = EarlyStopping(
-        monitor="val_loss", min_delta=1e-3, patience=2, verbose=True, mode="min")
+        monitor="val_loss", min_delta=1e-4, patience=2, verbose=True, mode="min")
     lr_logger = LearningRateMonitor()
     logger = TensorBoardLogger("lightning_logs")
 
