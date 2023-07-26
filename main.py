@@ -22,6 +22,7 @@ elif torch.cuda.is_available():
 else:
     device = "cpu"
 
+
 def preprocess():
     path = "dataset/2022.csv"
     df = pd.read_csv(path, sep=',')
@@ -100,12 +101,12 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
     (actuals - baseline_predictions).abs().mean().item()
 
     early_stop_callback = EarlyStopping(
-        monitor="val_loss", min_delta=1e-4, patience=2, verbose=True, mode="min")
+        monitor="val_loss", min_delta=1e-3, patience=2, verbose=True, mode="min")
     lr_logger = LearningRateMonitor()
     logger = TensorBoardLogger("lightning_logs")
 
     trainer = pl.Trainer(
-        max_epochs=20,
+        max_epochs=10,
         accelerator='gpu',
         devices=1,
         enable_model_summary=True,
