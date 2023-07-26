@@ -3,14 +3,25 @@ import os
 import numpy as np
 import pandas as pd
 import torch
+import torch.backends
 import matplotlib.pyplot as plt
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
 from lightning.pytorch.loggers import TensorBoardLogger
 from pytorch_forecasting import TimeSeriesDataSet, GroupNormalizer, Baseline, TemporalFusionTransformer, QuantileLoss, MAE, NaNLabelEncoder
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
+if torch.backends.mps.is_available():
+    device = "mps"
+    workers = 8
+    # enable cpu fallback
+    os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'
+    # print environment variables
+    print(os.environ)
+elif torch.cuda.is_available():
+    device = "cuda"
+    workers = 12
+else:
+    device = "cpu"
 
 def preprocess():
     path = "dataset/2022.csv"
@@ -20,10 +31,13 @@ def preprocess():
 
     # convert date column to weekday
     df["Weekday"] = pd.to_datetime(df["Date"]).dt.weekday
-    df["time_idx"] = df.index
     # set the uid to "0" for all rows
-    df["uid"] = 0
+    df["uid"] = '0'
     df['index'] = df.index
+    df['Date'] = pd.to_datetime(df['Date'])
+
+    # fill nan values with interpolation
+    df = df.interpolate(method='linear', limit_direction='forward')
 
     print(df.head(20))
     return df
@@ -36,7 +50,7 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
     print("Training cutoff:", training_cutoff, "\n")
 
     training = TimeSeriesDataSet(
-        data[lambda x: x.time_idx <= training_cutoff],
+        data[lambda x: x.index <= training_cutoff],
         time_idx="index",
         target="Resting Heart Rate (count/min)",
         group_ids=["uid"],
@@ -45,7 +59,7 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
         min_prediction_length=1,
         max_prediction_length=max_prediction_length,
         static_categoricals=["uid"],
-        time_varying_known_reals=["index", "date"],
+        time_varying_known_reals=["index", "Date"],
         time_varying_unknown_reals=['Heart Rate Variability (ms)', 'Active Energy (kJ)', 'Apple Exercise Time (min)', 'Apple Exercise Time (min)',
                                     'Basal Energy Burned (kJ)', 'Environmental Audio Exposure (dBASPL)', 'Flights Climbed (count)', 'Headphone Audio Exposure (dBASPL)', 'Heart Rate [Min] (count/min)', 'Heart Rate [Max] (count/min)', 'Heart Rate [Avg] (count/min)', 'Heart Rate Variability (ms)', 'Resting Heart Rate (count/min)'],
         target_normalizer=GroupNormalizer(
