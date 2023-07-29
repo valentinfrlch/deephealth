@@ -210,5 +210,5 @@ def correlation(data):
 if __name__ == "__main__":
     data = preprocess()
     # visualize(data)
-    # forecast(data)
-    correlation(data)
+    forecast(data)
+    # correlation(data)
