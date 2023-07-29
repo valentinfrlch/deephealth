@@ -2,6 +2,7 @@
 import os
 import numpy as np
 import pandas as pd
+import seaborn as sns
 import torch
 import torch.backends
 import matplotlib.pyplot as plt
@@ -60,8 +61,7 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
         max_prediction_length=max_prediction_length,
         static_categoricals=["uid"],
         time_varying_known_reals=["index", "Date"],
-        time_varying_unknown_reals=['Active Energy (kJ)', 'Apple Exercise Time (min)', 'Apple Exercise Time (min)',
-                                    'Basal Energy Burned (kJ)', 'Environmental Audio Exposure (dBASPL)', 'Flights Climbed (count)', 'Headphone Audio Exposure (dBASPL)', 'Heart Rate [Min] (count/min)', 'Heart Rate [Max] (count/min)', 'Heart Rate [Avg] (count/min)', 'Heart Rate Variability (ms)', 'Resting Heart Rate (count/min)'],
+        time_varying_unknown_reals=['Heart Rate [Avg] (count/min)', 'Body Temperature (degC)', 'Environmental Audio Exposure (dBASPL)'],
         target_normalizer=GroupNormalizer(
             groups=["uid"], transformation="softplus"
         ),  # we normalize by group
@@ -191,9 +191,24 @@ def visualize(data):
     plt.title("Returns {uid}")
     # save the figure to /results
     plt.savefig('visual.png')
+    
+    
+def correlation(data):
+    # create a correlation matrix
+    # filter out all strings in the data
+    data = data.select_dtypes(exclude=['object'])
+    corr = data.corr()
+    # remove the diagonal values
+    mask = np.triu(np.ones_like(corr, dtype=bool))
+    # plot the correlation matrix
+    plt.figure(figsize=(30, 25))
+    sns.heatmap(corr, annot=True, cmap="coolwarm", mask=mask)
+    plt.savefig('correlation.png')
+    
 
 
 if __name__ == "__main__":
     data = preprocess()
     # visualize(data)
-    forecast(data)
+    # forecast(data)
+    correlation(data)
