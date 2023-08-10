@@ -42,7 +42,6 @@ def preprocess(file):
 
         # fill nan values with interpolation
         df = df.interpolate(method='linear', limit_direction='forward')
-
         print(df.head(20))
     elif file.endswith('.xml'):
         # check if file is valid xml
