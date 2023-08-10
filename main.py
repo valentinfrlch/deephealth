@@ -228,5 +228,5 @@ def correlation(data):
 if __name__ == "__main__":
     data = preprocess('dataset/export.xml')
     # visualize(data)
-    # forecast(data)
-    # correlation(data)
+    forecast(data)
+    # # correlation(data)
