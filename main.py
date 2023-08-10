@@ -10,6 +10,9 @@ import lightning.pytorch as pl
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
 from lightning.pytorch.loggers import TensorBoardLogger
 from pytorch_forecasting import TimeSeriesDataSet, GroupNormalizer, Baseline, TemporalFusionTransformer, QuantileLoss, MAE, NaNLabelEncoder
+import xml.etree.ElementTree as ET
+
+
 
 if torch.backends.mps.is_available():
     device = "mps"
@@ -24,23 +27,38 @@ else:
     device = "cpu"
 
 
-def preprocess():
-    path = "dataset/2022.csv"
-    df = pd.read_csv(path, sep=',')
-    # remove columns that have only NaN values
-    df = df.dropna(axis=1, how='all')
+def preprocess(file):
+    if file.endswith('.csv'):
+        df = pd.read_csv(file, sep=',')
+        # remove columns that have only NaN values
+        df = df.dropna(axis=1, how='all')
 
-    # convert date column to weekday
-    df["Weekday"] = pd.to_datetime(df["Date"]).dt.weekday
-    # set the uid to "0" for all rows
-    df["uid"] = '0'
-    df['index'] = df.index
-    df['Date'] = pd.to_datetime(df['Date'])
+        # convert date column to weekday
+        df["Weekday"] = pd.to_datetime(df["Date"]).dt.weekday
+        # set the uid to "0" for all rows
+        df["uid"] = '0'
+        df['index'] = df.index
+        df['Date'] = pd.to_datetime(df['Date'])
 
-    # fill nan values with interpolation
-    df = df.interpolate(method='linear', limit_direction='forward')
+        # fill nan values with interpolation
+        df = df.interpolate(method='linear', limit_direction='forward')
 
-    print(df.head(20))
+        print(df.head(20))
+    elif file.endswith('.xml'):
+        # check if file is valid xml
+        try:
+            # parse xml file with pandas to dataframe
+            # since the file is very large we need split the file into chunks
+            df = pd.read_xml(file, )
+            print(df.head(20))
+            # print(df.head(20))
+        except ET.ParseError:
+            print("File is not valid xml")
+            return None
+    else:
+        print("File type not supported")
+    
+    df = None
     return df
 
 
@@ -208,7 +226,7 @@ def correlation(data):
 
 
 if __name__ == "__main__":
-    data = preprocess()
+    data = preprocess('dataset/export.xml')
     # visualize(data)
     # forecast(data)
-    correlation(data)
+    # correlation(data)
