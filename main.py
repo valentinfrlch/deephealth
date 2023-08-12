@@ -10,8 +10,8 @@ import lightning.pytorch as pl
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
 from lightning.pytorch.loggers import TensorBoardLogger
 from pytorch_forecasting import TimeSeriesDataSet, GroupNormalizer, Baseline, TemporalFusionTransformer, QuantileLoss, MAE, NaNLabelEncoder
+import datetime as dt
 import xml.etree.ElementTree as ET
-
 
 
 if torch.backends.mps.is_available():
@@ -44,20 +44,48 @@ def preprocess(file):
         df = df.interpolate(method='linear', limit_direction='forward')
         print(df.head(20))
     elif file.endswith('.xml'):
-        # check if file is valid xml
-        try:
-            # parse xml file with pandas to dataframe
-            # since the file is very large we need split the file into chunks
-            df = pd.read_xml(file, )
-            print(df.head(20))
-            # print(df.head(20))
-        except ET.ParseError:
-            print("File is not valid xml")
-            return None
+        # create element tree object
+        tree = ET.parse(file)
+        # for every health record, extract the attributes
+        root = tree.getroot()
+        record_list = [x.attrib for x in root.iter('Record')]
+
+        health_records = pd.DataFrame(record_list)
+
+        # proper type to dates
+        for col in ['creationDate', 'startDate', 'endDate']:
+            health_records[col] = pd.to_datetime(health_records[col])
+
+        # value is numeric, NaN if fails
+        health_records['value'] = pd.to_numeric(
+            health_records['value'], errors='coerce')
+
+        # some records do not measure anything, just count occurences
+        # filling with 1.0 (= one time) makes it easier to aggregate
+        health_records['value'] = health_records['value'].fillna(1.0)
+
+        # shorter observation names
+        health_records['type'] = health_records['type'].str.replace(
+            'HKQuantityTypeIdentifier', '')
+        health_records['type'] = health_records['type'].str.replace(
+            'HKCategoryTypeIdentifier', '')
+        health_records.tail()
+
+        # pivot the dataframe so that each type is a column the and each row is a date
+        # since some types have multiple records per day, we interpolate the others
+        df = health_records.pivot_table(
+            index='creationDate',
+            columns=['type'],
+            values='value',
+
+        ).interpolate(method='time', limit_direction='both')
+        
+        # filter out all columns that have the word "dietary" in them
+        df = df[df.columns.drop(list(df.filter(regex='Dietary')))]
+        
     else:
+        df = None
         print("File type not supported")
-    
-    df = None
     return df
 
 
@@ -78,7 +106,8 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
         max_prediction_length=max_prediction_length,
         static_categoricals=["uid"],
         time_varying_known_reals=["index", "Date"],
-        time_varying_unknown_reals=['Heart Rate [Avg] (count/min)', 'Body Temperature (degC)', 'Environmental Audio Exposure (dBASPL)'],
+        time_varying_unknown_reals=[
+            'Heart Rate [Avg] (count/min)', 'Body Temperature (degC)', 'Environmental Audio Exposure (dBASPL)'],
         target_normalizer=GroupNormalizer(
             groups=["uid"], transformation="softplus"
         ),  # we normalize by group
@@ -188,19 +217,19 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
 def visualize(data):
     # use matplotlib to visualize the data, different stocks have different colors
     plt.figure(figsize=(15, 8))
-    for uid in data["uid"].unique():
+    for type in data["type"].unique():
         # x axis is time_idx, y axis is rtn
         plt.plot(
-            data[data["uid"] == uid]["Heart Rate [Avg] (count/min)"],
-            label=uid,
+            data[data["type"] == type]["Heart Rate [Avg] (count/min)"],
+            label=type,
         )
         plt.plot(
-            data[data["uid"] == uid]["Heart Rate [Max] (count/min)"],
-            label=uid,
+            data[data["type"] == type]["Heart Rate [Max] (count/min)"],
+            label=type,
         )
         plt.plot(
-            data[data["uid"] == uid]["Heart Rate [Min] (count/min)"],
-            label=uid,
+            data[data["type"] == type]["Heart Rate [Min] (count/min)"],
+            label=type,
         )
         # add legend
         plt.legend()
@@ -208,24 +237,26 @@ def visualize(data):
     plt.title("Returns {uid}")
     # save the figure to /results
     plt.savefig('visual.png')
-    
-    
+
+
 def correlation(data):
-    # create a correlation matrix
-    # filter out all strings in the data
-    data = data.select_dtypes(exclude=['object'])
+    # create a correlation matrix from the "value" column
     corr = data.corr()
     # remove the diagonal values
     mask = np.triu(np.ones_like(corr, dtype=bool))
     # plot the correlation matrix
-    plt.figure(figsize=(30, 25))
+    plt.figure(figsize=(90, 75))
     sns.heatmap(corr, annot=True, cmap="coolwarm", mask=mask)
     plt.savefig('correlation.png')
-    
+
+
+def export_to_csv(data):
+    data.to_csv('dataset/export.csv', index=False)
 
 
 if __name__ == "__main__":
     data = preprocess('dataset/export.xml')
+    # export_to_csv(data)
     # visualize(data)
-    forecast(data)
-    # # correlation(data)
+    # forecast(data)
+    correlation(data)
