@@ -2,3 +2,5 @@ searborn
 torch
 numpy
 pandas
+matplotlib
+pytorch-lightning
