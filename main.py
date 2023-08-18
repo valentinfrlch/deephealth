@@ -46,6 +46,8 @@ def preprocess(file):
     elif file.endswith('.xml'):
         # create element tree object
         tree = ET.parse(file)
+        print('Reading ' + file + '...')
+        print('Available features:'))
         # for every health record, extract the attributes
         root = tree.getroot()
         record_list = [x.attrib for x in root.iter('Record')]
@@ -109,7 +111,7 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
         time_varying_unknown_reals=[
             'Heart Rate [Avg] (count/min)', 'Body Temperature (degC)', 'Environmental Audio Exposure (dBASPL)'],
         target_normalizer=GroupNormalizer(
-            groups=["uid"], transformation="softplus"
+            groups=["uid"], transformation="count"
         ),  # we normalize by group
         categorical_encoders={
             # special encoder for categorical target
