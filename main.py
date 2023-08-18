@@ -47,7 +47,6 @@ def preprocess(file):
         # create element tree object
         tree = ET.parse(file)
         print('Reading ' + file + '...')
-        print('Available features:'))
         # for every health record, extract the attributes
         root = tree.getroot()
         record_list = [x.attrib for x in root.iter('Record')]
@@ -254,10 +253,17 @@ def correlation(data):
 
 def export_to_csv(data):
     data.to_csv('dataset/export.csv', index=False)
+    
+def get_features(data):
+    print('-'*50)
+    print('Available features:')
+    print(data.columns)
+    print('-'*50)
 
 
 if __name__ == "__main__":
     data = preprocess('dataset/export.xml')
+    get_features(data)
     # export_to_csv(data)
     # visualize(data)
     # forecast(data)
