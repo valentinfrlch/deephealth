@@ -1,6 +1,8 @@
-searborn
 torch
 numpy
 pandas
 matplotlib
 pytorch-lightning
+pytorch_forecasting
+lightning
+seaborn
