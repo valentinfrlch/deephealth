@@ -215,27 +215,25 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
         fig.savefig(f"results/prediction_{uid}.png")
 
 
-def visualize(data):
-    # use matplotlib to visualize the data, different stocks have different colors
-    plt.figure(figsize=(15, 8))
-    for type in data["type"].unique():
-        # x axis is time_idx, y axis is rtn
-        plt.plot(
-            data[data["type"] == type]["Heart Rate [Avg] (count/min)"],
-            label=type,
-        )
-        plt.plot(
-            data[data["type"] == type]["Heart Rate [Max] (count/min)"],
-            label=type,
-        )
-        plt.plot(
-            data[data["type"] == type]["Heart Rate [Min] (count/min)"],
-            label=type,
-        )
-        # add legend
-        plt.legend()
-    # break # plot only the first chart
-    plt.title("Returns {uid}")
+def visualize(data, features, freq='D'):
+    # plot a line chart of the features with matplotlib
+    data.plot(subplots=True, figsize=(16, 9))
+    # get the data: data.columns
+    if features is None:
+        return
+    if freq == 'D':
+        # we plot the heart rate over the course of each day
+        data['hour_str'] = data.index.hour.astype(str).str.zfill(2) + ':00'
+        data.groupby('hour_str')[features].mean().rolling(window=3).mean().plot(
+            kind='line', figsize=(16, 9))
+    elif freq == 'W':
+        # we plot the heart rate over the course of each week
+        data.groupby(data.index.week)[features].mean().plot(
+            kind='bar', figsize=(16, 9))
+
+    else:
+        # we plot all available data for the given feature
+        data[features].plot(subplots=True, figsize=(16, 9))
     # save the figure to /results
     plt.savefig('visual.png')
 
@@ -265,6 +263,6 @@ if __name__ == "__main__":
     data = preprocess('dataset/export.xml')
     get_features(data)
     # export_to_csv(data)
-    # visualize(data)
+    visualize(data, ['HeartRate'])
     # forecast(data)
-    correlation(data)
+    #correlation(data)
