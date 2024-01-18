@@ -290,7 +290,7 @@ if __name__ == "__main__":
     data = preprocess('dataset/export.pkl')
     get_features(data)
     # export_to_csv(data)
-    visualize(data, ['SleepAnalysis'],
+    visualize(data, ['HeartRate'],
               start_date='2023-01-01', end_date='2023-12-31')
     # correlation(data)
     # forecast(data)
