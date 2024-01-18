@@ -1,7 +1,7 @@
 torch
 numpy
 pandas
-matplotlib
+plotly
 pytorch-lightning
 pytorch_forecasting
 lightning

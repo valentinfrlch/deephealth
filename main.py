@@ -1,30 +1,9 @@
 # libraries:
 import os
-import numpy as np
 import pandas as pd
-import seaborn as sns
-import torch
-import torch.backends
-import matplotlib.pyplot as plt
-import lightning.pytorch as pl
-from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
-from lightning.pytorch.loggers import TensorBoardLogger
-from pytorch_forecasting import TimeSeriesDataSet, GroupNormalizer, Baseline, TemporalFusionTransformer, QuantileLoss, MAE, NaNLabelEncoder
-import datetime as dt
+import plotly.graph_objects as go
+import plotly.figure_factory as ff
 import xml.etree.ElementTree as ET
-
-
-if torch.backends.mps.is_available():
-    device = "mps"
-    workers = 8
-    # enable cpu fallback
-    os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'
-    # print environment variables
-elif torch.cuda.is_available():
-    device = "cuda"
-    workers = 12
-else:
-    device = "cpu"
 
 
 def preprocess(file):
@@ -57,10 +36,21 @@ def preprocess(file):
         for col in ['creationDate', 'startDate', 'endDate']:
             health_records[col] = pd.to_datetime(health_records[col])
 
+        # handle SleepAnalysis records
+        if 'HKCategoryTypeIdentifierSleepAnalysis' in health_records['type'].unique():
+            sleep_analysis_records = health_records[health_records['type']
+                                                    == 'HKCategoryTypeIdentifierSleepAnalysis']
+            sleep_analysis_records['value'] = sleep_analysis_records['value'].map({
+                'HKCategoryValueSleepAnalysisInBed': 0,
+                'HKCategoryValueSleepAnalysisAwake': 1,
+                'HKCategoryValueSleepAnalysisAsleepCore': 2,
+                'HKCategoryValueSleepAnalysisAsleepREM': 3
+            })
+            health_records.update(sleep_analysis_records)
+
         # value is numeric, NaN if fails
         health_records['value'] = pd.to_numeric(
             health_records['value'], errors='coerce')
-
         # some records do not measure anything, just count occurences
         # filling with 1.0 (= one time) makes it easier to aggregate
         health_records['value'] = health_records['value'].fillna(1.0)
@@ -80,10 +70,14 @@ def preprocess(file):
             values='value',
 
         ).interpolate(method='time', limit_direction='both')
-        
+
         # filter out all columns that have the word "dietary" in them
         df = df[df.columns.drop(list(df.filter(regex='Dietary')))]
-        
+        # save the file as it takes a while to process
+        df.to_pickle('dataset/export.pkl')
+    elif file.endswith('.pkl'):
+        df = pd.read_pickle(file)
+
     else:
         df = None
         print("File type not supported")
@@ -215,54 +209,89 @@ def forecast(data, max_encoder_length=30, max_prediction_length=7):
         fig.savefig(f"results/prediction_{uid}.png")
 
 
-def visualize(data, features, freq='D'):
-    # plot a line chart of the features with matplotlib
-    data.plot(subplots=True, figsize=(16, 9))
-    # get the data: data.columns
-    if features is None:
-        return
-    if freq == 'D':
-        # we plot the heart rate over the course of each day
-        data['hour_str'] = data.index.hour.astype(str).str.zfill(2) + ':00'
-        data.groupby('hour_str')[features].mean().rolling(window=3).mean().plot(
-            kind='line', figsize=(16, 9))
-    elif freq == 'W':
-        # we plot the heart rate over the course of each week
-        data.groupby(data.index.week)[features].mean().plot(
-            kind='bar', figsize=(16, 9))
+def visualize(data, features, start_date='2021-01-01', end_date='2023-12-31'):
+    """Plot averaged heart rate over the course of a day for the given date range.
+    """
+    # filter data for the given date range
+    data = data[(data.index >= start_date) & (data.index <= end_date)]
 
-    else:
-        # we plot all available data for the given feature
-        data[features].plot(subplots=True, figsize=(16, 9))
-    # save the figure to /results
-    plt.savefig('visual.png')
+    # for each feature, calculate the average over the course of a day
+    for feature in features:
+        # group by the time of day and calculate the mean
+        data_grouped = data[feature].groupby(data.index.time).mean()
+        # convert the index to "hh:mm" format
+        data_grouped.index = data_grouped.index.map(
+            lambda t: f"{t.hour:02d}:{t.minute:02d}")
+        # create rolling average over 5 minutes
+        data_grouped = data_grouped.rolling(30).mean()
+
+        # create a new plotly graph object
+        fig = go.Figure()
+
+        # add the data to the plot
+        fig.add_trace(go.Scatter(x=data_grouped.index,
+                      y=data_grouped.values, mode='lines', name=feature))
+
+        # set the title and labels
+        fig.update_layout(
+            title=f'Average {feature} over the course of a day',
+            xaxis_title='Time',
+            yaxis_title=feature,
+            template='plotly_dark'  # use the plotly_dark theme
+        )
+
+        # set the x-axis to the hours in "hh:mm" format
+        fig.update_xaxes(tickvals=[f"{i:02d}:00" for i in range(24)])
+
+        # show the plot
+        fig.show()
 
 
 def correlation(data):
     # create a correlation matrix from the "value" column
     corr = data.corr()
-    # remove the diagonal values
-    mask = np.triu(np.ones_like(corr, dtype=bool))
-    # plot the correlation matrix
-    plt.figure(figsize=(90, 75))
-    sns.heatmap(corr, annot=True, cmap="coolwarm", mask=mask)
-    plt.savefig('correlation.png')
+
+    # create a heatmap from the correlation matrix
+    heatmap = ff.create_annotated_heatmap(
+        z=corr.values,
+        x=list(corr.columns),
+        y=list(corr.index),
+        annotation_text=corr.round(2).values,
+        colorscale='Viridis',
+        showscale=True,
+        reversescale=True,
+    )
+    # show the plot
+    heatmap.update_layout(
+        plot_bgcolor='rgb(10,10,10)',  # dark background
+        paper_bgcolor='rgb(10,10,10)',  # dark background
+        font_color='white',  # white text
+        template='plotly_dark'  # use the plotly_dark theme
+    )
+    heatmap.show()
 
 
 def export_to_csv(data):
     data.to_csv('dataset/export.csv', index=False)
-    
+
+
 def get_features(data):
     print('-'*50)
     print('Available features:')
     print(data.columns)
     print('-'*50)
+    print(data["SleepAnalysis"].describe())
+    print('-'*50)
+    # print last 10 rows of SleepAnalysis column
+    print(data["SleepAnalysis"].tail(10))
 
 
 if __name__ == "__main__":
-    data = preprocess('dataset/export.xml')
+    data = preprocess('dataset/export.pkl')
     get_features(data)
     # export_to_csv(data)
-    visualize(data, ['HeartRate'])
+    visualize(data, ['SleepAnalysis'],
+              start_date='2023-01-01', end_date='2023-12-31')
+    # correlation(data)
     # forecast(data)
-    #correlation(data)
+    # correlation(data)
