@@ -89,18 +89,20 @@ def preprocess(file):
 def augment(data, type='stress'):
     # daily stress level
     if type == 'stress':
-        weights = {
-            'HeartRate': 0.25,
-            'RespiratoryRate': 0.15,
-            'RestingHeartRate': 0.2,
-            'PhysicalEffort': 0.15,
-            'HeartRateVariabilitySDNN': 0.35
+        pos_weights = {
+            'RespiratoryRate': 0.25,
+            'RestingHeartRate': 0.75,
+        }
+        neg_weights = {
+            'PhysicalEffort': 0.25,
+            'HeartRateVariabilitySDNN': 0.75
         }
 
         # normalize the data
         normed_data = (data - data.min()) / (data.max() - data.min())
-        stress_score = sum(weight * normed_data[var]
-                           for var, weight in weights.items())
+        # calculate the stress score
+        stress_score = (normed_data[list(pos_weights.keys())].mul(
+            list(pos_weights.values())).sum(axis=1) - normed_data[list(neg_weights.keys())].mul(list(neg_weights.values())).sum(axis=1)) / 2
 
         # add the stress score to the dataframe
         data['Stress'] = stress_score
@@ -174,14 +176,15 @@ def visualize_range(data, columns, start_date='2020-01-01', end_date='2024-03-03
         if overlay:
             # calculate coefficients for the polynomial that minimizes the squared error
             coefficients = np.polyfit(
-                range(len(data)), data[column].values, 5)
+                range(len(data)), data[column].values, 4)
             # create a polynomial function with these coefficients
             polynomial = np.poly1d(coefficients)
             # calculate the y values for this polynomial
             y_trend = polynomial(range(len(data)))
             # add the trend line to the plot
+            color = 'red' if column == 'Stress' else 'green'
             fig.add_trace(go.Scatter(x=data.index, y=y_trend,
-                          mode='lines', name=f'{column} trend line', line=dict(color='green')))
+                          mode='lines', name=f'{column} trend line', line=dict(color=color)))
 
     # set the title and labels
     fig.update_layout(
@@ -246,5 +249,5 @@ if __name__ == "__main__":
     get_features(data)
     # export_to_csv(data)
     visualize_range(data, ['Stress'], overlay=True,
-              start_date='2024-02-26', end_date='2024-03-03')
+              start_date='2024-02-25', end_date='2024-03-03')
     # correlation(data)
