@@ -86,7 +86,29 @@ def preprocess(file):
     return df
 
 
-def visualize(data, columns, start_date='2020-01-01', end_date='2024-03-03', overlay=False):
+def augment(data, type='stress'):
+    # daily stress level
+    if type == 'stress':
+        weights = {
+            'HeartRate': 0.25,
+            'RespiratoryRate': 0.15,
+            'RestingHeartRate': 0.2,
+            'PhysicalEffort': 0.15,
+            'HeartRateVariabilitySDNN': 0.35
+        }
+
+        # normalize the data
+        normed_data = (data - data.min()) / (data.max() - data.min())
+        stress_score = sum(weight * normed_data[var]
+                           for var, weight in weights.items())
+
+        # add the stress score to the dataframe
+        data['Stress'] = stress_score
+        return data
+
+
+
+def visualize_average(data, columns, start_date='2020-01-01', end_date='2024-03-03', overlay=False):
     """Plot minute averaged values over the course of a day for the given date range.
     """
     # filter data for the given date range
@@ -132,6 +154,45 @@ def visualize(data, columns, start_date='2020-01-01', end_date='2024-03-03', ove
 
     fig.show()
 
+
+def visualize_range(data, columns, start_date='2020-01-01', end_date='2024-03-03', overlay=False):
+    """Plot values over the course of a day for the given date range.
+    """
+    # filter data for the given date range
+    data = data[(data.index >= start_date) & (data.index <= end_date)]
+
+    # create a new plotly graph object
+    fig = go.Figure()
+
+    # iterate over each column
+    for column in columns:
+        # add the data to the plot
+        fig.add_trace(go.Scatter(x=data.index,
+                      y=data[column].values, mode='lines', name=column))
+
+        # if overlay is true, add polynomial trend line to the plot
+        if overlay:
+            # calculate coefficients for the polynomial that minimizes the squared error
+            coefficients = np.polyfit(
+                range(len(data)), data[column].values, 5)
+            # create a polynomial function with these coefficients
+            polynomial = np.poly1d(coefficients)
+            # calculate the y values for this polynomial
+            y_trend = polynomial(range(len(data)))
+            # add the trend line to the plot
+            fig.add_trace(go.Scatter(x=data.index, y=y_trend,
+                          mode='lines', name=f'{column} trend line', line=dict(color='green')))
+
+    # set the title and labels
+    fig.update_layout(
+        title=f'Values over the course of a day',
+        xaxis_title='Time',
+        yaxis_title='Value',
+        template='plotly_dark'  # use the plotly_dark theme
+    )
+
+    fig.show()
+    
 
 def correlation(data):
     # create a correlation matrix from the "value" column
@@ -181,8 +242,9 @@ def get_features(data):
 
 if __name__ == "__main__":
     data = preprocess('dataset/export.pkl')
+    data = augment(data, type='stress')
     get_features(data)
     # export_to_csv(data)
-    visualize(data, ['ActiveEnergyBurned', 'AppleWalkingSteadiness',
-              'HeartRateVariabilitySDNN'], overlay=True)
+    visualize_range(data, ['Stress'], overlay=True,
+              start_date='2024-02-26', end_date='2024-03-03')
     # correlation(data)
