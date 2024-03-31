@@ -197,7 +197,7 @@ def visualize_range(data, columns, start_date='2020-01-01', end_date='2024-03-03
     fig.show()
     
 
-def correlation(data):
+def correlation(data, export=False):
     # create a correlation matrix from the "value" column
     corr = data.corr()
 
@@ -208,22 +208,27 @@ def correlation(data):
     masked_corr = corr.mask(mask)
 
     # create a heatmap from the correlation matrix
+    # set our own colorscale: Values over 0.2 are orange then red, values below -0.2 are blue then green. Values between -0.2 and 0.2 are black.
     heatmap = ff.create_annotated_heatmap(
         z=masked_corr.values,
         x=list(masked_corr.columns),
         y=list(masked_corr.index),
         annotation_text=masked_corr.round(2).fillna("").values,
-        colorscale='Viridis',
+        colorscale="rdbu",
         showscale=True,
         reversescale=True,
     )
     # show the plot
     heatmap.update_layout(
-        plot_bgcolor='rgb(10,10,10)',  # dark background
-        paper_bgcolor='rgb(10,10,10)',  # dark background
-        font_color='white',  # white text
-        template='plotly_dark'  # use the plotly_dark theme
+        plot_bgcolor='rgb(255,255,255)',  # 'rgb(10,10,10)',  # dark background
+        paper_bgcolor='rgb(255,255,255)',  # dark background
+        font_color='black',  # white text
+        template='plotly_white'  # use the plotly_dark theme
     )
+
+    if export:
+       # export all correlations to a csv file
+        masked_corr.to_csv('dataset/correlation.csv') 
 
     heatmap.show()
 
@@ -248,6 +253,5 @@ if __name__ == "__main__":
     data = augment(data, type='stress')
     get_features(data)
     # export_to_csv(data)
-    visualize_range(data, ['Stress'], overlay=True,
-              start_date='2024-02-25', end_date='2024-03-03')
-    # correlation(data)
+    # visualize_range(data, ['Stress'], overlay=True, start_date='2024-02-25', end_date='2024-03-03')
+    correlation(data, export=True)
